@@ -229,24 +229,28 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
         </div>
 
         {/* Tab links */}
-        <div className="flex bg-[#2d040a]/40 p-1.5 rounded-xl border border-[#FDF2F2]/10 w-full md:w-auto">
+        <div className="flex bg-[#2d040a]/40 p-1 rounded-xl border border-[#FDF2F2]/10 w-full md:w-auto">
           <button
             onClick={() => setAdminTab('dashboard')}
-            className={`flex-1 md:flex-none px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${adminTab === 'dashboard' ? 'bg-[#E53E3E] text-white shadow-md' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
+            className={`flex-1 md:flex-none px-2 sm:px-4 py-2.5 rounded-md text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${adminTab === 'dashboard' ? 'bg-[#E53E3E] text-white shadow-md' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
+            style={{ minHeight: '44px' }}
           >
-            <BarChart3 className="h-4 w-4" />
-            <span>Painel & Códigos</span>
+            <BarChart3 className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Painel & Códigos</span>
+            <span className="inline sm:hidden">Painel</span>
           </button>
           
           <button
             id="tab-btn-letters"
             onClick={() => setAdminTab('letters')}
-            className={`flex-1 md:flex-none px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${adminTab === 'letters' ? 'bg-[#E53E3E] text-white shadow-md' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
+            className={`flex-1 md:flex-none px-2 sm:px-4 py-2.5 rounded-md text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${adminTab === 'letters' ? 'bg-[#E53E3E] text-white shadow-md' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
+            style={{ minHeight: '44px' }}
           >
-            <MailOpen className="h-4 w-4" />
-            <span>Cartas Recebidas</span>
+            <MailOpen className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Cartas Recebidas</span>
+            <span className="inline sm:hidden">Cartas</span>
             {stats.pending > 0 && (
-              <span className="bg-[#E53E3E] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center animate-bounce">
+              <span className="bg-[#E53E3E] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center animate-bounce shrink-0">
                 {stats.pending}
               </span>
             )}
@@ -254,10 +258,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
           <button
             onClick={() => setAdminTab('responsibles')}
-            className={`flex-1 md:flex-none px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${adminTab === 'responsibles' ? 'bg-[#E53E3E] text-white shadow-md' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
+            className={`flex-1 md:flex-none px-2 sm:px-4 py-2.5 rounded-md text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${adminTab === 'responsibles' ? 'bg-[#E53E3E] text-white shadow-md' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
+            style={{ minHeight: '44px' }}
           >
-            <Users2 className="h-4 w-4" />
-            <span>Responsáveis</span>
+            <Users2 className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Responsáveis</span>
+            <span className="inline sm:hidden">Equipe</span>
           </button>
         </div>
       </div>
@@ -568,24 +574,26 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-[#FDF2F2]/5 flex items-center justify-between">
-                      <span className="text-[10px] text-[#FDF2F2]/30 font-medium font-mono">Postada em: {new Date(letter.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <div className="pt-3 border-t border-[#FDF2F2]/5 flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-[10px] text-[#FDF2F2]/30 font-medium font-mono shrink-0">Postada em: {new Date(letter.createdAt).toLocaleDateString('pt-BR')}</span>
                       
                       {letter.status === 'pending' ? (
                         <button
                           id={`btn-complete-letter-${letter.id}`}
                           onClick={() => triggerCompleteConfirmation(letter.id)}
-                          className="px-4 py-2 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 shadow-sm active:scale-95 transition-all text-center flex items-center gap-1 cursor-pointer font-sans"
+                          className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 shadow-sm active:scale-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer font-sans"
+                          style={{ minHeight: '44px' }}
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                           <span>Escrever Carta</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => handleUndoComplete(letter.id)}
-                          className="px-4 py-2 rounded-xl text-[#FDF2F2]/80 hover:bg-[#FDF2F2]/10 border border-[#FDF2F2]/10 font-bold text-xs uppercase tracking-wider active:scale-95 transition-all text-center flex items-center gap-1 cursor-pointer font-sans"
+                          className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-[#FDF2F2]/80 hover:bg-[#FDF2F2]/10 border border-[#FDF2F2]/10 font-bold text-xs uppercase tracking-wider active:scale-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer font-sans"
+                          style={{ minHeight: '44px' }}
                         >
-                          <Undo2 className="h-3.5 w-3.5" />
+                          <Undo2 className="h-3.5 w-3.5 shrink-0" />
                           <span>Desfazer</span>
                         </button>
                       )}

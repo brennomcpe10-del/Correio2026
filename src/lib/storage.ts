@@ -267,7 +267,7 @@ export async function submitLetter(
         signature,
         writingType,
         isAnonymous,
-        senderName: isAnonymous ? undefined : senderName,
+        senderName: isAnonymous ? "" : (senderName || ""),
         product: productType,
         createdAt: new Date().toISOString(),
         status: 'pending',

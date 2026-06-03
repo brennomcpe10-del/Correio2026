@@ -499,10 +499,11 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               )}
             </div>
 
-            <div className="pt-4 border-t border-[#FDF2F2]/10 flex justify-end">
+            <div className="pt-4 border-t border-[#FDF2F2]/10 flex justify-end w-full">
               <button
                 type="submit"
-                className="px-6 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-[#E53E3E] hover:bg-[#9B1C31] active:scale-95 transition-all shadow-lg hover:shadow-[#E53E3E]/10 cursor-pointer flex items-center gap-1.5 group font-sans"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-[#E53E3E] hover:bg-[#9B1C31] active:scale-95 transition-all shadow-lg hover:shadow-[#E53E3E]/10 cursor-pointer flex items-center justify-center gap-1.5 group font-sans"
+                style={{ minHeight: '44px' }}
               >
                 <span>Selo e Pré-visualizar Carta</span>
                 <Eye className="h-4 w-4 group-hover:scale-110 transition-transform" />
@@ -591,10 +592,11 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
           </div>
 
           {/* Action buttons */}
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full">
             <button
               onClick={() => setStep('form')}
-              className="px-6 py-3.5 rounded-xl border border-[#FDF2F2]/10 text-[#FDF2F2] font-semibold text-xs uppercase bg-[#FDF2F2]/5 hover:bg-[#FDF2F2]/10 transition-colors cursor-pointer flex items-center gap-1.5"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-[#FDF2F2]/10 text-[#FDF2F2] font-semibold text-xs uppercase bg-[#FDF2F2]/5 hover:bg-[#FDF2F2]/10 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              style={{ minHeight: '44px' }}
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Editar Carta</span>
@@ -602,7 +604,8 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
             <button
               onClick={handleFinalSubmit}
               disabled={isSubmitting}
-              className="px-8 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 shadow-lg cursor-pointer flex items-center gap-2 disabled:opacity-55 font-sans"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-55 font-sans"
+              style={{ minHeight: '44px' }}
             >
               {isSubmitting ? (
                 <>
