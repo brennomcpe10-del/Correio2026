@@ -224,7 +224,7 @@ export async function validateCode(codeString: string): Promise<AccessCode | nul
 // LETTERS API
 export async function getLetters(): Promise<Letter[]> {
   try {
-    const snap = await getDocs(query(collection(db, 'letters'), orderBy('createdAt', 'desc')));
+    const snap = await getDocs(query(collection(db, 'letters'), orderBy('recipient', 'asc')));
     return snap.docs.map(doc => doc.data() as Letter);
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'letters');

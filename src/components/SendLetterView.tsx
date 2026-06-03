@@ -246,21 +246,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
             <span>O código serve apenas como passe de autorização.</span>
           </div>
 
-          {/* Tips box with demo codes to help grading / testing */}
-          <div className="p-4 bg-[#d97706]/5 rounded-2xl text-left border border-[#d97706]/10 max-w-md mx-auto">
-            <h4 className="font-sans font-bold text-xs text-[#d97706] mb-1 flex items-center gap-1">
-              💡 Dica de Teste (Mock Codes)
-            </h4>
-            <p className="text-[10px] text-[#FDF2F2]/60 mb-2 leading-relaxed">
-              Você pode usar qualquer um dos códigos de teste pré-criados ativos abaixo para testar instantaneamente sem precisar criar um no painel admin:
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono font-bold text-orange-200">
-              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-AMOR-E202</span>
-              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-FEST-A103</span>
-              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-DOCE-C505</span>
-              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-ROME-U432</span>
-            </div>
-          </div>
+
         </div>
       )}
 

@@ -299,31 +299,36 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {responsibles.map((resp) => (
-                    <div 
+                    <a 
                       key={resp.id}
-                      className="p-4 rounded-2xl bg-[#2d040a]/20 hover:bg-[#2d040a]/50 hover:border-[#E53E3E]/20 transition-all border border-[#FDF2F2]/5 flex items-center gap-3.5"
+                      href={getWhatsAppLink(resp.whatsapp, resp.name)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-4 rounded-3xl bg-[#2d040a]/25 hover:bg-emerald-950/20 hover:border-emerald-500/30 border border-[#FDF2F2]/10 flex items-center gap-4 transition-all group cursor-pointer text-left w-full h-full"
                     >
-                      <img 
-                        src={resp.avatarUrl} 
-                        alt={resp.name}
-                        className="h-12 w-12 rounded-full object-cover shadow-inner border-2 border-[#E53E3E]"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="flex-1 space-y-1">
-                        <h4 className="font-sans font-bold text-sm sm:text-base text-[#FDF2F2] leading-snug">{resp.name}</h4>
-                        <p className="text-[10px] text-[#FDF2F2]/40 font-medium font-mono">{resp.whatsapp}</p>
-                        
-                        <a
-                           href={getWhatsAppLink(resp.whatsapp, resp.name)}
-                           target="_blank"
-                           rel="noreferrer"
-                           className="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] uppercase tracking-wide py-1 px-2.5 rounded-lg transition-colors gap-1 shadow-sm cursor-pointer"
-                        >
-                          <Phone className="h-3 w-3 fill-white" />
-                          <span>WhatsApp</span>
-                        </a>
+                      <div className="relative shrink-0">
+                        <img 
+                          src={resp.avatarUrl} 
+                          alt={resp.name}
+                          className="h-14 w-14 rounded-full object-cover shadow-md border-2 border-[#E53E3E] group-hover:border-emerald-500 transition-colors"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1 rounded-full border border-[#1f0306] shadow">
+                          <Phone className="h-3 w-3 fill-current text-white shrink-0" />
+                        </div>
                       </div>
-                    </div>
+                      <div className="flex-1 min-w-0 space-y-1.5 flex flex-col justify-between h-full">
+                        <div>
+                          <h4 className="font-sans font-extrabold text-sm sm:text-base text-[#FDF2F2] leading-snug group-hover:text-emerald-400 transition-colors truncate">{resp.name}</h4>
+                          <p className="text-[10px] text-[#FDF2F2]/50 font-semibold font-mono tracking-wide">{resp.whatsapp}</p>
+                        </div>
+                        
+                        <div className="w-full bg-emerald-600 group-hover:bg-emerald-500 text-white font-bold text-[11px] uppercase tracking-wider py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md group-active:scale-95 duration-250 mt-1" style={{ minHeight: '40px' }}>
+                          <Phone className="h-3.5 w-3.5 fill-current text-white shrink-0" />
+                          <span>Falar no WhatsApp</span>
+                        </div>
+                      </div>
+                    </a>
                   ))}
                 </div>
               )}

@@ -90,7 +90,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
     if (password.trim() === 'arraial2026') {
       setIsAuthenticated(true);
     } else {
-      setAuthError('Senha incorreta! Dica: Use "arraial2026" como senha de administrador.');
+      setAuthError('Acesso negado: Senha incorreta!');
     }
   };
 
@@ -181,7 +181,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
               <input
                 id="admin-password-input"
                 type="password"
-                placeholder="Ex: arraial2026"
+                placeholder="Digite a senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#1f0306] outline-none"
@@ -204,9 +204,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
               <LogIn className="h-4 w-4" />
               <span>Entrar no Painel</span>
             </button>
-            <p className="text-[10px] text-[#FDF2F2]/40 text-center italic mt-2">
-              Dica: a senha padrão de teste do arraial é <span className="font-mono font-bold text-amber-400 bg-[#1f0306] px-1.5 py-0.5 rounded border border-[#FDF2F2]/10">arraial2026</span>
-            </p>
           </form>
         </div>
       </div>
