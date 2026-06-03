@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (default-deny catch-all)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Validation Functions
+    function isValidLetter(data) {
+      return data.keys().hasAll(['id', 'recipient', 'recipientClass', 'message', 'signature', 'writingType', 'isAnonymous', 'product', 'createdAt', 'status'])
+        && data.recipient is string && data.recipient.size() > 0 && data.recipient.size() <= 150
+        && data.recipientClass is string && data.recipientClass.size() > 0 && data.recipientClass.size() <= 150
+        && data.message is string && data.message.size() > 0 && data.message.size() <= 500
+        && data.signature is string && data.signature.size() > 0 && data.signature.size() <= 100
+        && data.writingType in ['handwritten', 'printed']
+        && data.isAnonymous is bool
+        && data.product in ['Cartinha', 'Cartinha + Trufa', 'Cartinha + Rosa', 'Cartinha + Trufa + Rosa', 'Cartinha + Buquê de Trufas']
+        && data.createdAt is string
+        && data.status in ['pending', 'completed'];
+    }
+
+    function isValidAccessCode(data) {
+      return data.keys().hasAll(['code', 'product', 'createdAt', 'status'])
+        && data.code is string && data.code.size() > 0
+        && data.product in ['Cartinha', 'Cartinha + Trufa', 'Cartinha + Rosa', 'Cartinha + Trufa + Rosa', 'Cartinha + Buquê de Trufas']
+        && data.createdAt is string
+        && data.status in ['active', 'used'];
+    }
+
+    function isValidResponsible(data) {
+      return data.keys().hasAll(['id', 'name', 'whatsapp', 'avatarUrl'])
+        && data.id is string
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && data.whatsapp is string && data.whatsapp.size() > 0 && data.whatsapp.size() <= 40
+        && data.avatarUrl is string && data.avatarUrl.size() > 0;
+    }
+
+    // 1. Responsibles rules
+    match /responsibles/{responsibleId} {
+      allow read: if true;
+      allow create, update: if isValidResponsible(request.resource.data);
+      allow delete: if true;
+    }
+
+    // 2. Access Codes rules
+    match /accessCodes/{codeId} {
+      allow read: if true;
+      allow create: if isValidAccessCode(request.resource.data);
+      allow update: if isValidAccessCode(request.resource.data) 
+        && (
+          // Admin can change codes
+          true 
+          || (
+            // Users can only change status from active to used
+            resource.data.status == 'active' 
+            && request.resource.data.status == 'used'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          )
+        );
+      allow delete: if true;
+    }
+
+    // 3. Letters rules
+    match /letters/{letterId} {
+      allow read: if true; // Admin and client flows read data
+      allow create: if isValidLetter(request.resource.data) && request.resource.data.status == 'pending';
+      allow update: if isValidLetter(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['pending', 'completed'];
+      allow delete: if true;
+    }
+  }
+}

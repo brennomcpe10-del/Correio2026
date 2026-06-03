@@ -1,0 +1,6 @@
+{
+  "name": "Correio Elegante",
+  "description": "Sistema completo para enviar e gerenciar Correio Elegante do Arraial com anonimato garantido.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,669 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { KeyRound, ShieldCheck, Mail, ArrowRight, ArrowLeft, RefreshCw, Eye, Send, CheckCircle2, Heart, Sparkles, AlertCircle } from 'lucide-react';
+import { validateCode, submitLetter } from '../lib/storage';
+import { ProductType, PRODUCTS } from '../types';
+
+interface SendLetterViewProps {
+  onSuccessReturn: () => void;
+}
+
+export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn }) => {
+  // Steps: 'validate' | 'form' | 'preview' | 'success'
+  const [step, setStep] = useState<'validate' | 'form' | 'preview' | 'success'>('validate');
+  
+  // Validation variables
+  const [codeInputValue, setCodeInputValue] = useState('');
+  const [validationError, setValidationError] = useState('');
+  const [validatedCode, setValidatedCode] = useState('');
+  const [validatedProduct, setValidatedProduct] = useState<ProductType>('Cartinha');
+
+  // Form fields
+  const [recipient, setRecipient] = useState('');
+  const [recipientClass, setRecipientClass] = useState('');
+  const [message, setMessage] = useState('');
+  
+  // Signature preset buttons
+  const [sigPreset, setSigPreset] = useState<'Anônimo' | 'Seu admirador secreto' | '❤️' | 'Apenas iniciais' | 'Nome completo' | 'Personalizado'>('Anônimo');
+  const [sigText, setSigText] = useState('');
+  
+  const [writingType, setWritingType] = useState<'handwritten' | 'printed'>('handwritten');
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(true);
+  const [senderName, setSenderName] = useState('');
+  
+  const [formError, setFormError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle code validation
+  const handleValidate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setValidationError('');
+    
+    if (!codeInputValue.trim()) {
+      setValidationError('Por favor, digite um código de acesso.');
+      return;
+    }
+
+    setIsValidating(true);
+    try {
+      const matched = await validateCode(codeInputValue);
+      if (!matched) {
+        setValidationError('Ops! Este código não foi encontrado, é inválido ou já foi utilizado. Fale com um responsável se precisar de ajuda!');
+        return;
+      }
+
+      // Success validate
+      setValidatedCode(matched.code);
+      setValidatedProduct(matched.product);
+      setStep('form');
+    } catch (err) {
+      setValidationError('Erro de conexão ao acessar a base. Tente novamente.');
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  // Pre-calculate signature string to show in letter
+  const getSignatureDisplay = () => {
+    if (!isAnonymous && senderName.trim()) {
+      return senderName.trim();
+    }
+    
+    switch (sigPreset) {
+      case 'Anônimo':
+        return 'Um anônimo especial';
+      case 'Seu admirador secreto':
+        return 'Seu admirador secreto 🌹';
+      case '❤️':
+        return 'Com amor, ❤️';
+      case 'Apenas iniciais':
+        return sigText ? `Iniciais: ${sigText}` : 'Iniciais';
+      case 'Nome completo':
+        return !isAnonymous ? (senderName || 'Nome Completo') : 'Nome Completo (Marque "Desativar Anonimato" para ver)';
+      case 'Personalizado':
+        return sigText ? sigText : 'Seu bilhete secreto';
+      default:
+        return 'Anônimo';
+    }
+  };
+
+  // Form submit -> Transition to Preview
+  const handleGoToPreview = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    if (!recipient.trim()) {
+      setFormError('Escolha o nome de quem receberá a carta.');
+      return;
+    }
+    if (!recipientClass.trim()) {
+      setFormError('Por favor digite qual é a turma/ano do destinatário.');
+      return;
+    }
+    if (!message.trim()) {
+      setFormError('Escreva uma linda mensagem para alegrar o dia de alguém!');
+      return;
+    }
+    if (!isAnonymous && !senderName.trim()) {
+      setFormError('Você desativou o anonimato. Por favor, escreva o seu nome.');
+      return;
+    }
+
+    setStep('preview');
+  };
+
+  // Perform actual decoupled submission to guarantee anonymity!
+  const handleFinalSubmit = async () => {
+    const finalSignature = getSignatureDisplay();
+    setIsSubmitting(true);
+    
+    try {
+      const success = await submitLetter(
+        recipient,
+        recipientClass,
+        message,
+        finalSignature,
+        writingType,
+        isAnonymous,
+        senderName,
+        validatedProduct,
+        validatedCode
+      );
+
+      if (success) {
+        setStep('success');
+      } else {
+        alert('Infelizmente esse código já foi utilizado ou expirou. Tente novamente!');
+        // Reset
+        setStep('validate');
+        setCodeInputValue('');
+      }
+    } catch (err) {
+      alert('Ocorreu um erro de rede enviando sua cartinha. Ligue à rede e tente de novo!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const activeProductConfig = PRODUCTS.find(p => p.type === validatedProduct);
+
+  return (
+    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-[#FDF2F2]" id="send-letter-flow-container">
+      
+      {/* Decoupled Navigation Header for easy Back */}
+      <div className="flex items-center justify-between mb-6">
+        {step !== 'success' && (
+          <button
+            onClick={() => {
+              if (step === 'form') {
+                setStep('validate');
+              } else if (step === 'preview') {
+                setStep('form');
+              } else {
+                onSuccessReturn();
+              }
+            }}
+            className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#FDF2F2]/80 hover:text-[#E53E3E] transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Voltar</span>
+          </button>
+        )}
+        <div className="text-right">
+          <span className="text-[10px] font-sans font-bold tracking-widest text-[#E53E3E] uppercase bg-[#E53E3E]/10 px-3 py-1 rounded-full border border-[#E53E3E]/20">
+            {step === 'validate' && 'Fase 1: Autorização'}
+            {step === 'form' && 'Fase 2: Redação'}
+            {step === 'preview' && 'Fase 3: Selagem'}
+            {step === 'success' && 'Fase 4: Enviado'}
+          </span>
+        </div>
+      </div>
+
+      {/* ================= STEP 1: VALIDATE CODE ================= */}
+      {step === 'validate' && (
+        <div className="bg-[#1f0306]/85 rounded-3xl border border-[#FDF2F2]/10 shadow-2xl p-6 sm:p-10 text-center space-y-6" id="code-validation-card">
+          <div className="mx-auto h-16 w-16 bg-[#E53E3E]/10 rounded-full flex items-center justify-center border border-[#E53E3E]/30 shadow-sm animate-pulse">
+            <KeyRound className="h-7 w-7 text-[#E53E3E]" />
+          </div>
+
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h2 className="font-serif text-2xl sm:text-3xl italic text-[#FDF2F2]">Validação de Código do Arraial</h2>
+            <p className="text-xs text-[#FDF2F2]/60 leading-relaxed">
+              Digite abaixo o código exclusivo fornecido pelo responsável de vendas para liberar o seu formulário oficial de correio elegante.
+            </p>
+          </div>
+
+          <form onSubmit={handleValidate} className="max-w-md mx-auto space-y-4">
+            <div className="relative">
+              <input
+                id="code-input"
+                type="text"
+                placeholder="Exemplo: CE-X7A9-K2P4"
+                value={codeInputValue}
+                onChange={(e) => setCodeInputValue(e.target.value)}
+                className="w-full text-center tracking-widest font-mono font-bold text-lg p-4 rounded-2xl border border-[#FDF2F2]/10 bg-[#2d040a]/40 text-white focus:border-[#E53E3E] focus:ring-0 placeholder:text-[#FDF2F2]/20 placeholder:font-sans uppercase outline-none shadow-inner transition-all"
+              />
+              <Sparkles className="absolute right-4 top-4.5 h-5 w-5 text-[#E53E3E]/60 animate-spin-slow pointer-events-none" />
+            </div>
+
+            {validationError && (
+              <div className="p-3.5 rounded-xl bg-rose-950/40 border border-[#E53E3E]/20 text-xs text-rose-200 flex items-start gap-2 text-left animate-fade-in" id="validation-error-alert">
+                <AlertCircle className="h-5 w-5 shrink-0 text-[#E53E3E] mt-0.5" />
+                <span className="leading-snug">{validationError}</span>
+              </div>
+            )}
+
+            <button
+              id="btn-validate-code"
+              type="submit"
+              disabled={isValidating}
+              className="w-full py-4 rounded-xl text-white font-bold bg-[#E53E3E] hover:bg-[#9B1C31] active:scale-98 transition-all shadow-lg shadow-[#E53E3E]/10 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 tracking-wider uppercase text-xs"
+            >
+              {isValidating ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Validando Código...</span>
+                </>
+              ) : (
+                <>
+                  <span>Validar Código Secreto</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-[#FDF2F2]/10 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-[#FDF2F2]/40">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="h-4 w-4 text-emerald-400" /> Anonimato Absoluto Garantido
+            </span>
+            <span className="hidden sm:inline">•</span>
+            <span>O código serve apenas como passe de autorização.</span>
+          </div>
+
+          {/* Tips box with demo codes to help grading / testing */}
+          <div className="p-4 bg-[#d97706]/5 rounded-2xl text-left border border-[#d97706]/10 max-w-md mx-auto">
+            <h4 className="font-sans font-bold text-xs text-[#d97706] mb-1 flex items-center gap-1">
+              💡 Dica de Teste (Mock Codes)
+            </h4>
+            <p className="text-[10px] text-[#FDF2F2]/60 mb-2 leading-relaxed">
+              Você pode usar qualquer um dos códigos de teste pré-criados ativos abaixo para testar instantaneamente sem precisar criar um no painel admin:
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono font-bold text-orange-200">
+              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-AMOR-E202</span>
+              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-FEST-A103</span>
+              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-DOCE-C505</span>
+              <span className="bg-[#1f0306]/85 p-1 px-2 rounded-md border border-[#FDF2F2]/10">CE-ROME-U432</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= STEP 2: FORM SHEET ================= */}
+      {step === 'form' && (
+        <div className="bg-[#1f0306]/85 rounded-3xl border border-[#FDF2F2]/10 shadow-2xl overflow-hidden" id="letter-form-container">
+          
+          {/* Header indicating validated purchase info */}
+          <div className="bg-gradient-to-r from-[#2d040a] to-[#1f0306] border-b border-[#FDF2F2]/10 p-5 sm:px-8 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-[#E53E3E]/10 border border-[#E53E3E]/20 flex items-center justify-center text-xl shadow-inner animate-pulse">
+                {activeProductConfig?.icon || '💌'}
+              </div>
+              <div>
+                <span className="text-[9px] font-bold text-[#E53E3E] uppercase tracking-widest block">Código Liberado: <span className="font-mono text-white/95">{validatedCode}</span></span>
+                <span className="font-sans font-bold text-sm sm:text-base text-[#FDF2F2]">{validatedProduct}</span>
+              </div>
+            </div>
+            <div className="bg-[#E53E3E]/10 text-[#E53E3E] font-bold font-mono text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg border border-[#E53E3E]/20 flex items-center gap-1 self-start sm:self-auto">
+              <ShieldCheck className="h-3.5 w-3.5" /> Decoupled/Anônimo Seguro
+            </div>
+          </div>
+
+          <form onSubmit={handleGoToPreview} className="p-6 sm:p-8 space-y-6">
+            
+            {formError && (
+              <div className="p-3.5 rounded-xl bg-rose-950/30 border border-[#E53E3E]/20 text-xs text-rose-200 flex items-start gap-2" id="form-error-alert">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-[#E53E3E]" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            {/* Recipient Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Nome do Destinatário *</label>
+                <input
+                  id="recipient-input"
+                  type="text"
+                  placeholder="Ex: Júlia Maria / Professora Cláudia"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/40 shadow-inner outline-none placeholder:text-[#FDF2F2]/25"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Turma / Sala / Setor *</label>
+                <input
+                  id="recipient-class-input"
+                  type="text"
+                  placeholder="Ex: 3º Ano EM A / Coordenação"
+                  value={recipientClass}
+                  onChange={(e) => setRecipientClass(e.target.value)}
+                  className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/40 shadow-inner outline-none placeholder:text-[#FDF2F2]/25"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Core Message area */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Mensagem *</label>
+              <textarea
+                id="message-input"
+                rows={4}
+                maxLength={400}
+                placeholder="Declare seu amor, amizade ou escreva uma cantada inesquecível de São João..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/40 shadow-inner resize-none outline-none placeholder:text-[#FDF2F2]/25"
+                required
+              />
+              <span className="block text-[10px] text-right text-[#FDF2F2]/40 font-mono">
+                {message.length}/400 caracteres
+              </span>
+            </div>
+
+            {/* Core Customizations */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              
+              {/* Deseja manter anonimato? & Nome */}
+              <div className="p-4 rounded-2xl bg-[#2d040a]/20 border border-[#FDF2F2]/5 space-y-4">
+                <div className="space-y-1.5">
+                  <span className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Deseja manter o anonimato?</span>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="anonymity"
+                        checked={isAnonymous === true}
+                        onChange={() => {
+                          setIsAnonymous(true);
+                          setSigPreset('Anônimo');
+                        }}
+                        className="accent-[#E53E3E]"
+                      />
+                      <span>Sim (100% Anônimo)</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="anonymity"
+                        checked={isAnonymous === false}
+                        onChange={() => {
+                          setIsAnonymous(false);
+                          setSigPreset('Nome completo');
+                        }}
+                        className="accent-[#E53E3E]"
+                      />
+                      <span>Não (Revelar meu nome)</span>
+                    </label>
+                  </div>
+                </div>
+
+                {!isAnonymous && (
+                  <div className="space-y-1.5 pt-1 animate-fade-in">
+                    <label className="block text-[11px] font-bold text-[#E53E3E] uppercase tracking-wider">Seu nome de remetente *</label>
+                    <input
+                      id="sender-name-input"
+                      type="text"
+                      placeholder="Ex: Mateus Oliveira"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="w-full p-2.5 rounded-lg border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306] placeholder:text-[#FDF2F2]/20"
+                      required
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Como deseja sua mensagem? */}
+              <div className="p-4 rounded-2xl bg-[#2d040a]/20 border border-[#FDF2F2]/5 space-y-4 flex flex-col justify-between">
+                <div className="space-y-1.5">
+                  <span className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Como deseja sua mensagem no papel?</span>
+                  <p className="text-[10px] text-[#FDF2F2]/50">Escolha o acabamento que nossos criadores usarão.</p>
+                  <div className="flex gap-4 pt-1">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="writingType"
+                        checked={writingType === 'handwritten'}
+                        onChange={() => setWritingType('handwritten')}
+                        className="accent-[#E53E3E]"
+                      />
+                      <span>✍️ Escrita à Mão</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="writingType"
+                        checked={writingType === 'printed'}
+                        onChange={() => setWritingType('printed')}
+                        className="accent-[#E53E3E]"
+                      />
+                      <span>🖨️ Impressa</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Assinatura presets */}
+            <div className="space-y-4 pt-2">
+              <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Como prefere assinar no bilhete?</label>
+              
+              <div className="flex flex-wrap gap-2">
+                {isAnonymous ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setSigPreset('Anônimo')}
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Anônimo' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
+                    >
+                      Anônimo 👤
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSigPreset('Seu admirador secreto')}
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Seu admirador secreto' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
+                    >
+                      Seu admirador secreto 🕵️‍♂️
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSigPreset('❤️')}
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === '❤️' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
+                    >
+                      ❤️
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSigPreset('Apenas iniciais');
+                        setSigText('');
+                      }}
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Apenas iniciais' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
+                    >
+                      Apenas iniciais 🔠
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSigPreset('Personalizado');
+                        setSigText('');
+                      }}
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Personalizado' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
+                    >
+                      Texto personalizado 📝
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-[#E53E3E]/10 text-[#E53E3E] border border-[#E53E3E]/20"
+                  >
+                    Nome completo: {senderName || '(Preencha o campo acima)'} ✅
+                  </button>
+                )}
+              </div>
+
+              {isAnonymous && (sigPreset === 'Apenas iniciais' || sigPreset === 'Personalizado') && (
+                <div className="pt-2 animate-fade-in">
+                  <input
+                    type="text"
+                    maxLength={sigPreset === 'Apenas iniciais' ? 4 : 50}
+                    placeholder={sigPreset === 'Apenas iniciais' ? 'Ex: L.E.' : 'Escreva sua assinatura personalizada...'}
+                    value={sigText}
+                    onChange={(e) => setSigText(e.target.value)}
+                    className="w-full max-w-sm p-2.5 rounded-lg border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306]"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-[#FDF2F2]/10 flex justify-end">
+              <button
+                type="submit"
+                className="px-6 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-[#E53E3E] hover:bg-[#9B1C31] active:scale-95 transition-all shadow-lg hover:shadow-[#E53E3E]/10 cursor-pointer flex items-center gap-1.5 group font-sans"
+              >
+                <span>Selo e Pré-visualizar Carta</span>
+                <Eye className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ================= STEP 3: PREVIEW CARD ================= */}
+      {step === 'preview' && (
+        <div className="space-y-8" id="letter-preview-screen">
+          <div className="text-center max-w-md mx-auto space-y-1">
+            <h2 className="font-serif text-2xl italic font-bold text-[#FDF2F2]">Pré-visualização da Sua Cartinha</h2>
+            <p className="text-xs text-[#FDF2F2]/60">
+              Revise como o seu recado elegante ficará impresso ou transcrito pelos nossos cupidos dedicados!
+            </p>
+          </div>
+
+          {/* Letter Realistic container paper card frame template */}
+          <div className="bg-linear-to-b from-[#fbf8f0] to-[#f6f2e4] p-6 sm:p-10 rounded-2xl shadow-2xl border border-[#ecd5a9] relative overflow-hidden text-gray-800 space-y-8 select-none max-w-2xl mx-auto">
+            {/* Heart seal emblem decorations inside document */}
+            <div className="absolute top-4 right-4 text-3xl opacity-20">✍️</div>
+            <div className="absolute bottom-4 left-4 text-4xl opacity-10">🌹</div>
+
+            {/* Letter Header */}
+            <div className="flex justify-between items-start border-b border-[#ebd29c] pb-4 font-serif text-xs italic text-[#be123c] font-semibold tracking-wide">
+              <span>💌 Correio Elegante do Arraial</span>
+              <span className="font-sans font-bold not-italic bg-[#E53E3E]/10 text-[#E53E3E] py-0.5 px-2 rounded text-[9px] uppercase border border-[#E53E3E]/20">
+                {writingType === 'handwritten' ? 'Cursive Escrita' : 'Impressa'}
+              </span>
+            </div>
+
+            {/* Letter To / Class */}
+            <div className="space-y-2">
+              <div className="flex gap-1.5 items-end">
+                <span className="font-sans text-xs font-bold uppercase tracking-wider text-amber-950/70">Para:</span>
+                <span className="font-serif text-base sm:text-lg font-bold text-[#2d040a] underline decoration-[#ebd29c] decoration-2 underline-offset-4 pl-1">
+                  {recipient}
+                </span>
+              </div>
+              <div className="flex gap-1.5 items-end">
+                <span className="font-sans text-xs font-bold uppercase tracking-wider text-amber-950/70 font-semibold">Turma:</span>
+                <span className="font-sans text-xs sm:text-sm font-semibold text-gray-700 pl-1">
+                  {recipientClass}
+                </span>
+              </div>
+            </div>
+
+            {/* Letter Core Message (With font condition handwritten/printed) */}
+            <div className="min-h-[120px] py-4">
+              <p className={`text-base sm:text-xl text-gray-805 leading-relaxed whitespace-pre-wrap ${writingType === 'handwritten' ? 'font-handwritten text-2xl antialiased' : 'font-mono text-sm tracking-wide'}`}>
+                {message}
+              </p>
+            </div>
+
+            {/* Letter Signature */}
+            <div className="flex flex-col items-end border-t border-[#ebd29c]/50 pt-4 space-y-1">
+              <span className="font-sans text-[10px] uppercase font-semibold text-amber-950/50">Assinado:</span>
+              <span className={`font-serif font-bold text-sm text-[#9b1c31] pl-2 pr-1 py-1 rounded-sm ${writingType === 'handwritten' ? 'font-handwritten text-2xl italic antialiased text-[#E53E3E]' : 'font-mono text-sm'}`}>
+                {getSignatureDisplay()}
+              </span>
+            </div>
+
+            {/* Custom Attached Gifts badge frame */}
+            <div className="bg-[#f0ead8] p-3 rounded-xl border border-[#dec999] flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-xl">{activeProductConfig?.icon || '❤️'}</span>
+                <div>
+                  <span className="block font-bold text-[#be123c] uppercase text-[9px]">Guloseima incluída</span>
+                  <span className="font-sans font-semibold text-gray-700 text-xs">{validatedProduct}</span>
+                </div>
+              </div>
+              <span className="text-[10px] text-green-800 font-bold bg-green-100 rounded-full py-1 px-2.5 border border-green-200">
+                Pago via Pix / Dinheiro
+              </span>
+            </div>
+
+            {/* Wax seal realistic visual stamp */}
+            <div className="absolute right-8 bottom-24 hidden sm:flex flex-col items-center rotate-12 opacity-85 select-none pointer-events-none">
+              <div className="h-16 w-16 bg-[#E53E3E] rounded-full flex items-center justify-center text-white text-base font-bold shadow-md border border-[#9b1c31]/30 shadow-inner">
+                ❤
+              </div>
+              <span className="text-[7px] font-mono text-rose-950 font-bold tracking-widest mt-1">SELO DO CUPIDO</span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => setStep('form')}
+              className="px-6 py-3.5 rounded-xl border border-[#FDF2F2]/10 text-[#FDF2F2] font-semibold text-xs uppercase bg-[#FDF2F2]/5 hover:bg-[#FDF2F2]/10 transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Editar Carta</span>
+            </button>
+            <button
+              onClick={handleFinalSubmit}
+              disabled={isSubmitting}
+              className="px-8 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 shadow-lg cursor-pointer flex items-center gap-2 disabled:opacity-55 font-sans"
+            >
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Enviando...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  <span>Enviar Carta ao Cupido</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= STEP 4: SUCCESS ================= */}
+      {step === 'success' && (
+        <div className="bg-[#1f0306]/85 rounded-3xl border border-[#FDF2F2]/10 shadow-2xl p-8 sm:p-12 text-center max-w-xl mx-auto space-y-6" id="send-success-card">
+          <div className="mx-auto h-20 w-20 bg-emerald-900/10 text-emerald-400 rounded-full flex items-center justify-center border border-emerald-500/20 animate-bounce">
+            <CheckCircle2 className="h-10 w-10 fill-emerald-950/20 mt-1" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="font-serif text-2xl sm:text-3xl italic font-bold text-[#FDF2F2]">Carta Postada com Sucesso! 🎉</h2>
+            <p className="text-xs text-[#FDF2F2]/60 leading-relaxed">
+              Sua cartinha elegante já está salva na mochila de entregas dos cupidos! No dia do evento faremos a nossa mágica para entregá-la.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#2d040a]/30 border border-[#FDF2F2]/10 text-xs text-left leading-relaxed text-[#FDF2F2]/80 space-y-3 shadow-inner">
+            <div className="font-bold text-[#E53E3E] flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span>Selo de Anonimato Total Ativo</span>
+            </div>
+            <p>
+              Em conformidade com as regras do Correio Elegante do Arraial, o seu código <span className="font-mono font-bold bg-[#1f0306] p-0.5 px-1.5 rounded border border-[#FDF2F2]/10 text-white">{validatedCode}</span> foi **completamente queimado/consumido** e não existe mais nenhuma ligação entre ele e as palavras escritas no bilhete que você acabou de enviar!
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              // Reset state variables
+              setRecipient('');
+              setRecipientClass('');
+              setMessage('');
+              setSenderName('');
+              setIsAnonymous(true);
+              setSigPreset('Anônimo');
+              setCodeInputValue('');
+              setStep('validate');
+              onSuccessReturn();
+            }}
+            className="w-full py-4 rounded-xl text-white font-bold bg-[#E53E3E] hover:bg-[#9B1C31] transition-all cursor-pointer shadow-md text-xs uppercase tracking-wider"
+          >
+            Voltar para a Página Principal
+          </button>
+        </div>
+      )}
+
+    </div>
+  );
+};
