@@ -45,7 +45,7 @@ service cloud.firestore {
     }
 
     // 2. Access Codes rules
-    match /accessCodes/{codeId} {
+    match /codigos_arraial/{codeId} {
       allow read: if true;
       allow create: if isValidAccessCode(request.resource.data);
       allow update: if isValidAccessCode(request.resource.data) 
@@ -63,7 +63,7 @@ service cloud.firestore {
     }
 
     // 3. Letters rules
-    match /letters/{letterId} {
+    match /cartas_arraial/{letterId} {
       allow read: if true; // Admin and client flows read data
       allow create: if isValidLetter(request.resource.data) && request.resource.data.status == 'pending';
       allow update: if isValidLetter(request.resource.data)

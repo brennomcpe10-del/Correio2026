@@ -646,7 +646,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
           <div className="space-y-2">
             <h2 className="font-serif text-2xl sm:text-3xl italic font-bold text-[#FDF2F2]">Carta Postada com Sucesso! 🎉</h2>
             <p className="text-sm text-[#FDF2F2]/90 leading-relaxed max-w-lg mx-auto">
-              Sua mensagem foi enviada e criptografada com sucesso! O código usado já foi validado e desativado, garantindo o seu anonimato total. Agora é só esperar o Cupido fazer a mágica dele no dia do evento!
+              Sua mensagem foi guardada com sucesso na mochila do cupido! O código que você utilizou já foi validado e desativado para garantir o seu anonimato total. Agora é só esperar o Cupido fazer a mágica dele no dia do evento!
             </p>
           </div>
 
@@ -656,7 +656,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               <span>Selo de Anonimato Total Ativo</span>
             </div>
             <p>
-              Sua mensagem foi guardada com sucesso na mochila do cupido! O código que você utilizou já foi validado e desativado para garantir o seu anonimato total. Agora é só esperar o Cupido fazer a mágica dele no dia do evento!
+              Sua mensagem foi salva no banco de dados de maneira completamente desacoplada. O código de acesso serve apenas para liberar o envio e foi permanentemente desativado, sem manter qualquer relação com a carta criada.
             </p>
           </div>
 

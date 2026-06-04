@@ -64,7 +64,7 @@ export async function initLocalStorage() {
     }
 
     // 2. Bootstrapping Access Codes
-    const codesSnap = await getDocs(collection(db, 'accessCodes'));
+    const codesSnap = await getDocs(collection(db, 'codigos_arraial'));
     if (codesSnap.empty) {
       alert("Enviando dados para o Firebase (initLocalStorage - Bootstrapping Access Codes)...");
       const batch = writeBatch(db);
@@ -78,13 +78,13 @@ export async function initLocalStorage() {
         { code: 'CE-USED-8888', product: 'Cartinha', createdAt: new Date(Date.now() - 86400000).toISOString(), status: 'used' },
       ];
       initialCodes.forEach(code => {
-        batch.set(doc(db, 'accessCodes', code.code), code);
+        batch.set(doc(db, 'codigos_arraial', code.code), code);
       });
       await batch.commit();
     }
 
     // 3. Bootstrapping Letters
-    const lettersSnap = await getDocs(collection(db, 'letters'));
+    const lettersSnap = await getDocs(collection(db, 'cartas_arraial'));
     if (lettersSnap.empty) {
       alert("Enviando dados para o Firebase (initLocalStorage - Bootstrapping Letters)...");
       const batch = writeBatch(db);
@@ -112,7 +112,7 @@ export async function initLocalStorage() {
           writingType: 'printed',
           product: 'Cartinha + Trufa',
           createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-          status: 'completed',
+          status: 'pending',
         },
         {
           id: 'let-3',
@@ -128,7 +128,7 @@ export async function initLocalStorage() {
         }
       ];
       initialLetters.forEach(letter => {
-        batch.set(doc(db, 'letters', letter.id), letter);
+        batch.set(doc(db, 'cartas_arraial', letter.id), letter);
       });
       await batch.commit();
     }
@@ -153,7 +153,7 @@ export async function initLocalStorage() {
 export async function forceRecreateEmptyCollections(): Promise<void> {
   try {
     alert("Consultando o Firebase (forceRecreateEmptyCollections)...");
-    const codesSnap = await getDocs(collection(db, 'accessCodes'));
+    const codesSnap = await getDocs(collection(db, 'codigos_arraial'));
     if (codesSnap.empty) {
       alert("Enviando dados para o Firebase (forceRecreateEmptyCollections - Criando CE-TESTE-2026)...");
       // Create test access code CE-TESTE-2026
@@ -163,10 +163,10 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
         createdAt: new Date().toISOString(),
         status: 'active'
       };
-      await setDoc(doc(db, 'accessCodes', 'CE-TESTE-2026'), testCode);
+      await setDoc(doc(db, 'codigos_arraial', 'CE-TESTE-2026'), testCode);
 
       // Create test letter to force creation of 'letters' collection
-      const lettersSnap = await getDocs(collection(db, 'letters'));
+      const lettersSnap = await getDocs(collection(db, 'cartas_arraial'));
       if (lettersSnap.empty) {
         alert("Enviando dados para o Firebase (forceRecreateEmptyCollections - Criando let-test-2026)...");
         const testLetter: Letter = {
@@ -181,7 +181,7 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
           createdAt: new Date().toISOString(),
           status: 'pending'
         };
-        await setDoc(doc(db, 'letters', 'let-test-2026'), testLetter);
+        await setDoc(doc(db, 'cartas_arraial', 'let-test-2026'), testLetter);
       }
     }
   } catch (error: any) {
@@ -235,11 +235,11 @@ export async function deleteResponsible(id: string): Promise<void> {
 export async function getAccessCodes(): Promise<AccessCode[]> {
   try {
     alert("Consultando o Firebase (getAccessCodes)...");
-    const snap = await getDocs(query(collection(db, 'accessCodes'), orderBy('createdAt', 'desc')));
+    const snap = await getDocs(query(collection(db, 'codigos_arraial'), orderBy('createdAt', 'desc')));
     return snap.docs.map(doc => doc.data() as AccessCode);
   } catch (error: any) {
     alert("Erro no Firebase (getAccessCodes): " + error.message);
-    handleFirestoreError(error, OperationType.GET, 'accessCodes');
+    handleFirestoreError(error, OperationType.GET, 'codigos_arraial');
   }
 }
 
@@ -264,11 +264,11 @@ export async function generateCode(product: ProductType): Promise<string> {
     };
     
     alert("Enviando dados para o Firebase (generateCode)...");
-    await setDoc(doc(db, 'accessCodes', formattedCode), newCode);
+    await setDoc(doc(db, 'codigos_arraial', formattedCode), newCode);
     return formattedCode;
   } catch (error: any) {
     alert("Erro no Firebase (generateCode): " + error.message);
-    handleFirestoreError(error, OperationType.WRITE, 'accessCodes');
+    handleFirestoreError(error, OperationType.WRITE, 'codigos_arraial');
   }
 }
 
@@ -276,7 +276,7 @@ export async function validateCode(codeString: string): Promise<AccessCode | nul
   try {
     alert("Consultando o Firebase (validateCode)...");
     const cleanCode = codeString.toUpperCase().trim();
-    const docRef = doc(db, 'accessCodes', cleanCode);
+    const docRef = doc(db, 'codigos_arraial', cleanCode);
     const snap = await getDoc(docRef);
     if (snap.exists()) {
       const data = snap.data() as AccessCode;
@@ -287,7 +287,7 @@ export async function validateCode(codeString: string): Promise<AccessCode | nul
     return null;
   } catch (error: any) {
     alert("Erro no Firebase (validateCode): " + error.message);
-    handleFirestoreError(error, OperationType.GET, `accessCodes/${codeString}`);
+    handleFirestoreError(error, OperationType.GET, `codigos_arraial/${codeString}`);
   }
 }
 
@@ -295,11 +295,11 @@ export async function validateCode(codeString: string): Promise<AccessCode | nul
 export async function getLetters(): Promise<Letter[]> {
   try {
     alert("Consultando o Firebase (getLetters)...");
-    const snap = await getDocs(query(collection(db, 'letters'), orderBy('recipient', 'asc')));
+    const snap = await getDocs(query(collection(db, 'cartas_arraial'), orderBy('recipient', 'asc')));
     return snap.docs.map(doc => doc.data() as Letter);
   } catch (error: any) {
     alert("Erro no Firebase (getLetters): " + error.message);
-    handleFirestoreError(error, OperationType.GET, 'letters');
+    handleFirestoreError(error, OperationType.GET, 'cartas_arraial');
   }
 }
 
@@ -316,9 +316,9 @@ export async function submitLetter(
   codeString: string
 ): Promise<boolean> {
   const cleanCode = codeString.toUpperCase().trim();
-  const codeRef = doc(db, 'accessCodes', cleanCode);
+  const codeRef = doc(db, 'codigos_arraial', cleanCode);
   const letterId = `let-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  const letterRef = doc(db, 'letters', letterId);
+  const letterRef = doc(db, 'cartas_arraial', letterId);
 
   try {
     alert("Enviando dados para o Firebase (submitLetter)...");
@@ -360,12 +360,12 @@ export async function submitLetter(
 export async function updateLetterStatus(id: string, status: 'pending' | 'completed'): Promise<boolean> {
   try {
     alert("Enviando dados para o Firebase (updateLetterStatus)...");
-    const docRef = doc(db, 'letters', id);
+    const docRef = doc(db, 'cartas_arraial', id);
     await updateDoc(docRef, { status });
     return true;
   } catch (error: any) {
     alert("Erro no Firebase (updateLetterStatus): " + error.message);
-    handleFirestoreError(error, OperationType.UPDATE, `letters/${id}`);
+    handleFirestoreError(error, OperationType.UPDATE, `cartas_arraial/${id}`);
   }
 }
 
@@ -379,8 +379,8 @@ export async function getStats(): Promise<{
   try {
     alert("Consultando o Firebase (getStats)...");
     const [lettersSnap, codesSnap] = await Promise.all([
-      getDocs(collection(db, 'letters')),
-      getDocs(collection(db, 'accessCodes'))
+      getDocs(collection(db, 'cartas_arraial')),
+      getDocs(collection(db, 'codigos_arraial'))
     ]);
 
     const letters = lettersSnap.docs.map(doc => doc.data() as Letter);
