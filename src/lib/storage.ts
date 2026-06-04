@@ -127,6 +127,17 @@ export async function initLocalStorage() {
       });
       await batch.commit();
     }
+
+    // 4. Bootstrapping Allowed Admins
+    const adminsSnap = await getDocs(collection(db, 'allowedAdmins'));
+    if (adminsSnap.empty) {
+      const batch = writeBatch(db);
+      const defaultAdmins = ['brennomcpe10@gmail.com', 'admin@escola.com.br'];
+      defaultAdmins.forEach(email => {
+        batch.set(doc(db, 'allowedAdmins', email.toLowerCase().trim()), { email: email.toLowerCase().trim(), createdAt: new Date().toISOString() });
+      });
+      await batch.commit();
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, 'bootstrap');
   }
@@ -359,5 +370,48 @@ export async function getStats(): Promise<{
     };
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'stats');
+  }
+}
+
+// ALLOWED ADMINS API
+export async function getAllowedAdmins(): Promise<string[]> {
+  try {
+    const snap = await getDocs(collection(db, 'allowedAdmins'));
+    return snap.docs.map(doc => doc.id);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, 'allowedAdmins');
+    return [];
+  }
+}
+
+export async function addAllowedAdmin(email: string): Promise<void> {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    if (!cleanEmail) return;
+    await setDoc(doc(db, 'allowedAdmins', cleanEmail), { email: cleanEmail, createdAt: new Date().toISOString() });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, 'allowedAdmins');
+  }
+}
+
+export async function removeAllowedAdmin(email: string): Promise<void> {
+  const cleanEmail = email.toLowerCase().trim();
+  try {
+    await deleteDoc(doc(db, 'allowedAdmins', cleanEmail));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `allowedAdmins/${cleanEmail}`);
+  }
+}
+
+export async function checkIsAllowedAdmin(email: string): Promise<boolean> {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    if (!cleanEmail) return false;
+    const docRef = doc(db, 'allowedAdmins', cleanEmail);
+    const snap = await getDoc(docRef);
+    return snap.exists();
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `allowedAdmins/${email}`);
+    return false;
   }
 }

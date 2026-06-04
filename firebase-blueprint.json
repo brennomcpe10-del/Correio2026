@@ -104,6 +104,23 @@
         }
       },
       "required": ["id", "recipient", "recipientClass", "message", "signature", "writingType", "isAnonymous", "product", "createdAt", "status"]
+    },
+    "AllowedAdmin": {
+      "title": "AllowedAdmin",
+      "description": "A VIP VIP list of allowed administrative emails authorized to enter the secure admin dashboard",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Specific allowed administrative email"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation date of permission"
+        }
+      },
+      "required": ["email", "createdAt"]
     }
   },
   "firestore": {
@@ -118,6 +135,10 @@
     "letters": {
       "schema": "Letter",
       "description": "Secure, decoupled database of anonymous letters submitted for arraial festival delivery"
+    },
+    "allowedAdmins": {
+      "schema": "AllowedAdmin",
+      "description": "Secure authorized administration login registry for VIP email authorization"
     }
   }
 }

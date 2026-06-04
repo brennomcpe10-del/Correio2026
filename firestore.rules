@@ -71,5 +71,10 @@ service cloud.firestore {
         && request.resource.data.status in ['pending', 'completed'];
       allow delete: if true;
     }
+
+    // 4. Allowed Admins rules
+    match /allowedAdmins/{email} {
+      allow read, write: if true;
+    }
   }
 }

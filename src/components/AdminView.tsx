@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { 
   getStats, getAccessCodes, generateCode, getLetters, updateLetterStatus, 
-  getResponsibles, addResponsible, deleteResponsible 
+  getResponsibles, addResponsible, deleteResponsible,
+  getAllowedAdmins, addAllowedAdmin, removeAllowedAdmin, checkIsAllowedAdmin
 } from '../lib/storage';
 import { ProductType, PRODUCTS, AccessCode, Letter, Responsible } from '../types';
 
@@ -21,12 +22,17 @@ interface AdminViewProps {
 
 export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsiblesList }) => {
   // Authentication
+  const [adminEmail, setAdminEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // Tab: 'dashboard' | 'letters' | 'codes' | 'responsibles'
-  const [adminTab, setAdminTab] = useState<'dashboard' | 'letters' | 'responsibles'>('dashboard');
+  // Allowed Admins list
+  const [allowedAdmins, setAllowedAdmins] = useState<string[]>([]);
+  const [newAllowedEmail, setNewAllowedEmail] = useState('');
+
+  // Tab: 'dashboard' | 'letters' | 'responsibles' | 'allowedAdmins'
+  const [adminTab, setAdminTab] = useState<'dashboard' | 'letters' | 'responsibles' | 'allowedAdmins'>('dashboard');
 
   // Stats & States retrieved from DB
   const [stats, setStats] = useState<{
@@ -69,28 +75,47 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
   const refreshAllData = async () => {
     try {
-      const [newStats, newCodes, newLetters] = await Promise.all([
+      const [newStats, newCodes, newLetters, newAdmins] = await Promise.all([
         getStats(),
         getAccessCodes(),
-        getLetters()
+        getLetters(),
+        getAllowedAdmins()
       ]);
       if (newStats) setStats(newStats);
       if (newCodes) setCodes(newCodes);
       if (newLetters) setLetters(newLetters);
+      if (newAdmins) setAllowedAdmins(newAdmins);
       onRefreshData(); // Propagate to home view
     } catch (err) {
       console.error("Error refreshing data: ", err);
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    // Strict requirement password: "arraial2026"
-    if (password.trim() === 'arraial2026') {
-      setIsAuthenticated(true);
-    } else {
+    
+    const emailLower = adminEmail.toLowerCase().trim();
+    if (!emailLower) {
+      setAuthError('Por favor, digite o e-mail do administrador.');
+      return;
+    }
+    
+    if (password.trim() !== 'arraial2026') {
       setAuthError('Acesso negado: Senha incorreta!');
+      return;
+    }
+
+    try {
+      const isAllowed = await checkIsAllowedAdmin(emailLower);
+      if (isAllowed) {
+        setIsAuthenticated(true);
+      } else {
+        setAuthError('Acesso negado: e-mail não autorizado');
+      }
+    } catch (err) {
+      console.error(err);
+      setAuthError('Erro ao validar e-mail no banco de dados.');
     }
   };
 
@@ -177,6 +202,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
           <form onSubmit={handleLogin} className="p-6 sm:p-8 space-y-4 bg-gradient-to-tr from-[#1f0306] to-[#2d040a]/40">
             <div className="space-y-1.5 animate-fade-in">
+              <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">E-mail do Administrador *</label>
+              <input
+                id="admin-email-input"
+                type="email"
+                placeholder="Ex: seu-email@escola.com.br"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#1f0306] outline-none font-sans"
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
               <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Senha do Administrador *</label>
               <input
                 id="admin-password-input"
@@ -261,6 +299,17 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
             <Users2 className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">Responsáveis</span>
             <span className="inline sm:hidden">Equipe</span>
+          </button>
+
+          <button
+            id="tab-btn-allowed-admins"
+            onClick={() => setAdminTab('allowedAdmins')}
+            className={`flex-1 md:flex-none px-2 sm:px-4 py-2.5 rounded-md text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${adminTab === 'allowedAdmins' ? 'bg-[#E53E3E] text-white shadow-md' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
+            style={{ minHeight: '44px' }}
+          >
+            <Lock className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Gerenciar Administradores</span>
+            <span className="inline sm:hidden">Admins</span>
           </button>
         </div>
       </div>
@@ -721,6 +770,95 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ================= VIEW 4: ALLOWED ADMINS PANEL ================= */}
+      {adminTab === 'allowedAdmins' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="allowed-admins-tab-subview">
+          
+          {/* Add Allowed Admin Form */}
+          <div className="bg-[#1f0306]/85 border border-[#FDF2F2]/10 rounded-2xl p-6 shadow-2xl h-fit space-y-4">
+            <div>
+              <h3 className="font-serif font-bold text-lg italic text-[#FDF2F2]">Adicionar Administrador</h3>
+              <p className="text-xs text-[#FDF2F2]/50 mt-0.5">Cadastre um e-mail para ter acesso administrativo autorizado.</p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const email = newAllowedEmail.trim().toLowerCase();
+              if (!email) return;
+              await addAllowedAdmin(email);
+              setNewAllowedEmail('');
+              await refreshAllData();
+            }} className="space-y-4">
+              <div className="space-y-1.5 animate-fade-in animate-duration-300">
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">E-mail Permitido *</label>
+                <input
+                  id="admin-add-email-input"
+                  type="email"
+                  placeholder="Ex: brennomcpe10@gmail.com"
+                  value={newAllowedEmail}
+                  onChange={(e) => setNewAllowedEmail(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306] outline-none"
+                  required
+                />
+              </div>
+
+              <button
+                id="btn-admin-add-submit"
+                type="submit"
+                className="w-full py-3 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-[#E53E3E] hover:bg-[#9B1C31] transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 font-sans"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Adicionar E-mail Permitido</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Allowed Admins listing */}
+          <div className="lg:col-span-2 bg-[#1f0306]/85 border border-[#FDF2F2]/10 rounded-2xl p-6 shadow-2xl space-y-4 animate-fade-in text-[#FDF2F2]">
+            <div>
+              <h3 className="font-serif font-bold text-lg italic text-[#FDF2F2]">Administradores Autorizados</h3>
+              <p className="text-xs text-[#FDF2F2]/50 mt-0.5">Apenas estes e-mails associados à senha "arraial2026" podem se autenticar.</p>
+            </div>
+
+            <div className="space-y-2">
+              {allowedAdmins.length === 0 ? (
+                <p className="text-sm text-[#FDF2F2]/40 italic py-4">Nenhum e-mail cadastrado ainda.</p>
+              ) : (
+                allowedAdmins.map(email => (
+                  <div 
+                    key={email}
+                    className="p-4 rounded-xl border border-[#FDF2F2]/5 bg-[#2d040a]/20 flex items-center justify-between hover:border-[#E53E3E]/20 transition-all shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-[#E53E3E]/10 border border-[#E53E3E]/30 flex items-center justify-center text-xs font-mono font-bold text-[#E53E3E]">
+                        {email.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="font-sans font-bold text-sm text-[#FDF2F2] leading-tight break-all">{email}</h4>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        if (confirm(`Remover autorização para ${email}?`)) {
+                          await removeAllowedAdmin(email);
+                          await refreshAllData();
+                        }
+                      }}
+                      className="p-2 rounded-xl hover:bg-[#E53E3E]/10 hover:text-[#E53E3E] text-[#FDF2F2]/30 transition-colors cursor-pointer"
+                      title="Remover Administrador"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

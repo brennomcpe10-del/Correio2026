@@ -76,7 +76,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
     
     switch (sigPreset) {
       case 'Anônimo':
-        return 'Um anônimo especial';
+        return 'Anônimo';
       case 'Seu admirador secreto':
         return 'Seu admirador secreto 🌹';
       case '❤️':
@@ -177,7 +177,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
         <div className="text-right">
           <span className="text-[10px] font-sans font-bold tracking-widest text-[#E53E3E] uppercase bg-[#E53E3E]/10 px-3 py-1 rounded-full border border-[#E53E3E]/20">
             {step === 'validate' && 'Fase 1: Autorização'}
-            {step === 'form' && 'Fase 2: Redação'}
+            {step === 'form' && 'Fase 2: Escrever'}
             {step === 'preview' && 'Fase 3: Selagem'}
             {step === 'success' && 'Fase 4: Enviado'}
           </span>
@@ -296,15 +296,24 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Turma / Sala / Setor *</label>
-                <input
+                <select
                   id="recipient-class-input"
-                  type="text"
-                  placeholder="Ex: 3º Ano EM A / Coordenação"
                   value={recipientClass}
                   onChange={(e) => setRecipientClass(e.target.value)}
-                  className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/40 shadow-inner outline-none placeholder:text-[#FDF2F2]/25"
+                  className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/72 shadow-inner outline-none font-sans"
                   required
-                />
+                >
+                  <option value="" disabled className="text-gray-400 bg-[#1f0306]">Selecione a Turma</option>
+                  <option value="1°A" className="text-white bg-[#1f0306]">1°A</option>
+                  <option value="1°B" className="text-white bg-[#1f0306]">1°B</option>
+                  <option value="2°A EPT" className="text-white bg-[#1f0306]">2°A EPT</option>
+                  <option value="2°A" className="text-white bg-[#1f0306]">2°A</option>
+                  <option value="2°B" className="text-white bg-[#1f0306]">2°B</option>
+                  <option value="3°A" className="text-white bg-[#1f0306]">3°A</option>
+                  <option value="3°B" className="text-white bg-[#1f0306]">3°B</option>
+                  <option value="3°C" className="text-white bg-[#1f0306]">3°C</option>
+                  <option value="3°D" className="text-white bg-[#1f0306]">3°D</option>
+                </select>
               </div>
             </div>
 
@@ -326,163 +335,181 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               </span>
             </div>
 
-            {/* Core Customizations */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            {/* Seções de Customização - Organizadas em blocos elegantes e espaçosos */}
+            <div className="space-y-8 pt-4 border-t border-[#FDF2F2]/10" id="letter-customizations-stack">
               
-              {/* Deseja manter anonimato? & Nome */}
-              <div className="p-4 rounded-2xl bg-[#2d040a]/20 border border-[#FDF2F2]/5 space-y-4">
-                <div className="space-y-1.5">
-                  <span className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Deseja manter o anonimato?</span>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="anonymity"
-                        checked={isAnonymous === true}
-                        onChange={() => {
-                          setIsAnonymous(true);
-                          setSigPreset('Anônimo');
-                        }}
-                        className="accent-[#E53E3E]"
-                      />
-                      <span>Sim (100% Anônimo)</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="anonymity"
-                        checked={isAnonymous === false}
-                        onChange={() => {
-                          setIsAnonymous(false);
-                          setSigPreset('Nome completo');
-                        }}
-                        className="accent-[#E53E3E]"
-                      />
-                      <span>Não (Revelar meu nome)</span>
-                    </label>
-                  </div>
+              {/* Bloco 1: Anonimato */}
+              <div className="p-6 sm:p-7 rounded-2xl bg-[#2d040a]/25 border border-[#FDF2F2]/10 space-y-4 animate-fade-in">
+                <div className="flex items-center gap-2 border-b border-[#FDF2F2]/10 pb-3">
+                  <span className="text-sm font-bold text-[#E53E3E]">01.</span>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#FDF2F2]">Deseja manter o anonimato?</h3>
+                </div>
+                <p className="text-xs text-[#FDF2F2]/50">
+                  Escolha se deseja enviar este recado em segredo absoluto ou revelando o seu nome real de remetente.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 pt-1">
+                  <label className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 hover:bg-[#2d040a]/40 transition-all cursor-pointer text-xs font-bold text-[#FDF2F2]/90 flex-1">
+                    <input
+                      type="radio"
+                      name="anonymity"
+                      checked={isAnonymous === true}
+                      onChange={() => {
+                        setIsAnonymous(true);
+                        setSigPreset('Anônimo');
+                      }}
+                      className="accent-[#E53E3E] h-4 w-4 shrink-0"
+                    />
+                    <span>Sim (Enviar como Seguro 100% Anônimo)</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 hover:bg-[#2d040a]/40 transition-all cursor-pointer text-xs font-bold text-[#FDF2F2]/90 flex-1">
+                    <input
+                      type="radio"
+                      name="anonymity"
+                      checked={isAnonymous === false}
+                      onChange={() => {
+                        setIsAnonymous(false);
+                        setSigPreset('Nome completo');
+                      }}
+                      className="accent-[#E53E3E] h-4 w-4 shrink-0"
+                    />
+                    <span>Não (Identificar meu nome no bilhete)</span>
+                  </label>
                 </div>
 
                 {!isAnonymous && (
-                  <div className="space-y-1.5 pt-1 animate-fade-in">
-                    <label className="block text-[11px] font-bold text-[#E53E3E] uppercase tracking-wider">Seu nome de remetente *</label>
+                  <div className="space-y-2 pt-2 animate-fade-in max-w-md">
+                    <label className="block text-xs font-bold text-[#E53E3E] uppercase tracking-wider">Identidade do Remetente *</label>
                     <input
                       id="sender-name-input"
                       type="text"
-                      placeholder="Ex: Mateus Oliveira"
+                      placeholder="Qual é o seu nome completo?"
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
-                      className="w-full p-2.5 rounded-lg border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306] placeholder:text-[#FDF2F2]/20"
+                      className="w-full p-3 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306] placeholder:text-[#FDF2F2]/20 outline-none"
                       required
                     />
                   </div>
                 )}
               </div>
 
-              {/* Como deseja sua mensagem? */}
-              <div className="p-4 rounded-2xl bg-[#2d040a]/20 border border-[#FDF2F2]/5 space-y-4 flex flex-col justify-between">
-                <div className="space-y-1.5">
-                  <span className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Como deseja sua mensagem no papel?</span>
-                  <p className="text-[10px] text-[#FDF2F2]/50">Escolha o acabamento que nossos criadores usarão.</p>
-                  <div className="flex gap-4 pt-1">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="writingType"
-                        checked={writingType === 'handwritten'}
-                        onChange={() => setWritingType('handwritten')}
-                        className="accent-[#E53E3E]"
-                      />
-                      <span>✍️ Escrita à Mão</span>
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold text-[#FDF2F2]/70 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="writingType"
-                        checked={writingType === 'printed'}
-                        onChange={() => setWritingType('printed')}
-                        className="accent-[#E53E3E]"
-                      />
-                      <span>🖨️ Impressa</span>
-                    </label>
-                  </div>
+              {/* Bloco 2: Tipo de Redação */}
+              <div className="p-6 sm:p-7 rounded-2xl bg-[#2d040a]/25 border border-[#FDF2F2]/10 space-y-4">
+                <div className="flex items-center gap-2 border-b border-[#FDF2F2]/10 pb-3">
+                  <span className="text-sm font-bold text-[#E53E3E]">02.</span>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#FDF2F2]">Como deseja sua mensagem no papel?</h3>
+                </div>
+                <p className="text-xs text-[#FDF2F2]/50">
+                  Os nossos cupidos vão preparar o papel físico baseado na sua preferência de escrita.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 pt-1">
+                  <label className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 hover:bg-[#2d040a]/40 transition-all cursor-pointer text-xs font-bold text-[#FDF2F2]/90 flex-1">
+                    <input
+                      type="radio"
+                      name="writingType"
+                      checked={writingType === 'handwritten'}
+                      onChange={() => setWritingType('handwritten')}
+                      className="accent-[#E53E3E] h-4 w-4 shrink-0"
+                    />
+                    <span>✍️ Escrita à Mão (Cursive Tradicional)</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 hover:bg-[#2d040a]/40 transition-all cursor-pointer text-xs font-bold text-[#FDF2F2]/90 flex-1">
+                    <input
+                      type="radio"
+                      name="writingType"
+                      checked={writingType === 'printed'}
+                      onChange={() => setWritingType('printed')}
+                      className="accent-[#E53E3E] h-4 w-4 shrink-0"
+                    />
+                    <span>🖨️ Impressa (Tipografia Clássica)</span>
+                  </label>
                 </div>
               </div>
-            </div>
 
-            {/* Assinatura presets */}
-            <div className="space-y-4 pt-2">
-              <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Como prefere assinar no bilhete?</label>
-              
-              <div className="flex flex-wrap gap-2">
-                {isAnonymous ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setSigPreset('Anônimo')}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Anônimo' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
-                    >
-                      Anônimo 👤
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSigPreset('Seu admirador secreto')}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Seu admirador secreto' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
-                    >
-                      Seu admirador secreto 🕵️‍♂️
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSigPreset('❤️')}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === '❤️' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
-                    >
-                      ❤️
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSigPreset('Apenas iniciais');
-                        setSigText('');
-                      }}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Apenas iniciais' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
-                    >
-                      Apenas iniciais 🔠
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSigPreset('Personalizado');
-                        setSigText('');
-                      }}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${sigPreset === 'Personalizado' ? 'bg-[#E53E3E] text-white shadow-md' : 'bg-[#2d040a]/40 hover:bg-[#2d040a]/80 text-[#FDF2F2]/70 border border-[#FDF2F2]/10'}`}
-                    >
-                      Texto personalizado 📝
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-[#E53E3E]/10 text-[#E53E3E] border border-[#E53E3E]/20"
-                  >
-                    Nome completo: {senderName || '(Preencha o campo acima)'} ✅
-                  </button>
+              {/* Bloco 3: Assinatura */}
+              <div className="p-6 sm:p-7 rounded-2xl bg-[#2d040a]/25 border border-[#FDF2F2]/10 space-y-4">
+                <div className="flex items-center gap-2 border-b border-[#FDF2F2]/10 pb-3">
+                  <span className="text-sm font-bold text-[#E53E3E]">03.</span>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#FDF2F2]">Como prefere assinar no bilhete?</h3>
+                </div>
+                <p className="text-xs text-[#FDF2F2]/50">
+                  Selecione o formato exato da assinatura que constará na mensagem impressa e entregue.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                  {isAnonymous ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setSigPreset('Anônimo')}
+                        className={`p-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${sigPreset === 'Anônimo' ? 'bg-[#E53E3E] text-white border-[#E53E3E] shadow-md shadow-[#E53E3E]/15' : 'bg-[#1f0306]/70 hover:bg-[#2d040a]/60 text-[#FDF2F2]/80 border-[#FDF2F2]/10'}`}
+                        style={{ minHeight: '44px' }}
+                      >
+                        Não especificar meu nome
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSigPreset('Seu admirador secreto')}
+                        className={`p-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${sigPreset === 'Seu admirador secreto' ? 'bg-[#E53E3E] text-white border-[#E53E3E] shadow-md shadow-[#E53E3E]/15' : 'bg-[#1f0306]/70 hover:bg-[#2d040a]/60 text-[#FDF2F2]/80 border-[#FDF2F2]/10'}`}
+                        style={{ minHeight: '44px' }}
+                      >
+                        Seu Admirador Secreto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSigPreset('❤️')}
+                        className={`p-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${sigPreset === '❤️' ? 'bg-[#E53E3E] text-white border-[#E53E3E] shadow-md shadow-[#E53E3E]/15' : 'bg-[#1f0306]/70 hover:bg-[#2d040a]/60 text-[#FDF2F2]/80 border-[#FDF2F2]/10'}`}
+                        style={{ minHeight: '44px' }}
+                      >
+                        Com Amor, Coração (❤️)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSigPreset('Apenas iniciais');
+                          setSigText('');
+                        }}
+                        className={`p-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${sigPreset === 'Apenas iniciais' ? 'bg-[#E53E3E] text-white border-[#E53E3E] shadow-md shadow-[#E53E3E]/15' : 'bg-[#1f0306]/70 hover:bg-[#2d040a]/60 text-[#FDF2F2]/80 border-[#FDF2F2]/10'}`}
+                        style={{ minHeight: '44px' }}
+                      >
+                        Usar Apenas Iniciais
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSigPreset('Personalizado');
+                          setSigText('');
+                        }}
+                        className={`p-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${sigPreset === 'Personalizado' ? 'bg-[#E53E3E] text-white border-[#E53E3E] shadow-md shadow-[#E53E3E]/15' : 'bg-[#1f0306]/70 hover:bg-[#2d040a]/60 text-[#FDF2F2]/80 border-[#FDF2F2]/10'}`}
+                        style={{ minHeight: '44px' }}
+                      >
+                        Assinatura Personalizada
+                      </button>
+                    </>
+                  ) : (
+                    <div className="col-span-full p-4 rounded-xl text-xs font-bold bg-[#E53E3E]/10 text-[#E53E3E] border border-[#E53E3E]/20 text-center">
+                      Assinando como Revelado: <span className="underline">{senderName || '(Preencha o campo de nome)'}</span> ✅
+                    </div>
+                  )}
+                </div>
+
+                {isAnonymous && (sigPreset === 'Apenas iniciais' || sigPreset === 'Personalizado') && (
+                  <div className="pt-2 animate-fade-in max-w-sm">
+                    <label className="block text-[11px] font-bold text-[#E53E3E] uppercase tracking-wider mb-1.5">
+                      {sigPreset === 'Apenas iniciais' ? 'Digite suas Iniciais (Max 4 letras)' : 'Escreva sua assinatura'}
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={sigPreset === 'Apenas iniciais' ? 4 : 50}
+                      placeholder={sigPreset === 'Apenas iniciais' ? 'Ex: L.E.' : 'Ex: Seu eterno parceiro de quadrilha'}
+                      value={sigText}
+                      onChange={(e) => setSigText(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306] outline-none"
+                      required
+                    />
+                  </div>
                 )}
               </div>
 
-              {isAnonymous && (sigPreset === 'Apenas iniciais' || sigPreset === 'Personalizado') && (
-                <div className="pt-2 animate-fade-in">
-                  <input
-                    type="text"
-                    maxLength={sigPreset === 'Apenas iniciais' ? 4 : 50}
-                    placeholder={sigPreset === 'Apenas iniciais' ? 'Ex: L.E.' : 'Escreva sua assinatura personalizada...'}
-                    value={sigText}
-                    onChange={(e) => setSigText(e.target.value)}
-                    className="w-full max-w-sm p-2.5 rounded-lg border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306]"
-                    required
-                  />
-                </div>
-              )}
             </div>
 
             <div className="pt-4 border-t border-[#FDF2F2]/10 flex justify-end w-full">
@@ -568,12 +595,12 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               </span>
             </div>
 
-            {/* Wax seal realistic visual stamp */}
-            <div className="absolute right-8 bottom-24 hidden sm:flex flex-col items-center rotate-12 opacity-85 select-none pointer-events-none">
-              <div className="h-16 w-16 bg-[#E53E3E] rounded-full flex items-center justify-center text-white text-base font-bold shadow-md border border-[#9b1c31]/30 shadow-inner">
+            {/* Wax seal realistic visual stamp - Positioned elegantly in the top margin away from text content */}
+            <div className="absolute right-6 top-16 hidden sm:flex flex-col items-center rotate-12 opacity-85 select-none pointer-events-none z-10">
+              <div className="h-12 w-12 bg-[#E53E3E] rounded-full flex items-center justify-center text-white text-base font-bold shadow-md border border-[#9b1c31]/30 shadow-inner">
                 ❤
               </div>
-              <span className="text-[7px] font-mono text-rose-950 font-bold tracking-widest mt-1">SELO DO CUPIDO</span>
+              <span className="text-[6.5px] font-mono text-rose-950 font-bold tracking-widest mt-0.5">SELO DO CUPIDO</span>
             </div>
           </div>
 
@@ -618,8 +645,8 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
 
           <div className="space-y-2">
             <h2 className="font-serif text-2xl sm:text-3xl italic font-bold text-[#FDF2F2]">Carta Postada com Sucesso! 🎉</h2>
-            <p className="text-xs text-[#FDF2F2]/60 leading-relaxed">
-              Sua cartinha elegante já está salva na mochila de entregas dos cupidos! No dia do evento faremos a nossa mágica para entregá-la.
+            <p className="text-sm text-[#FDF2F2]/90 leading-relaxed max-w-lg mx-auto">
+              Sua mensagem foi enviada e criptografada com sucesso! O código usado já foi validado e desativado, garantindo o seu anonimato total. Agora é só esperar o Cupido fazer a mágica dele no dia do evento!
             </p>
           </div>
 
