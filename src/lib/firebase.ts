@@ -6,23 +6,22 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, collection, getDocs, limit, query } from 'firebase/firestore';
-import firebaseConfigLocal from '../../firebase-applet-config.json';
 
-// Use env variables (Vercel) with safe fallbacks to local configuration
+// Use production Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || firebaseConfigLocal.apiKey,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || firebaseConfigLocal.authDomain,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || firebaseConfigLocal.projectId,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || firebaseConfigLocal.storageBucket,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigLocal.messagingSenderId,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || firebaseConfigLocal.appId,
-  firestoreDatabaseId: (process.env as any).NEXT_PUBLIC_FIREBASE_DATABASE_ID || firebaseConfigLocal.firestoreDatabaseId
+  apiKey: "AIzaSyASxuwHcBg5NM5eJIYam9GTChuYiNKuoWA",
+  authDomain: "correioelegante2026-7ca58.firebaseapp.com",
+  projectId: "correioelegante2026-7ca58",
+  storageBucket: "correioelegante2026-7ca58.firebasestorage.app",
+  messagingSenderId: "1089858279760",
+  appId: "1:1089858279760:web:63fbc7596cab271785b455",
+  measurementId: "G-DBGW4PG4EF"
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-export const auth = getAuth();
+export const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const auth = getAuth(app);
 
 export enum OperationType {
   CREATE = 'create',
