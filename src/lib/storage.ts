@@ -139,8 +139,8 @@ export async function initLocalStorage() {
       await batch.commit();
     }
   } catch (error: any) {
-    console.error("Erro no Firebase (initLocalStorage): ", error);
-    handleFirestoreError(error, OperationType.WRITE, 'bootstrap');
+    console.warn("Aviso no Firebase (initLocalStorage): ", error.message || error);
+    // Do not throw to prevent crashing initialization if rules aren't deployed yet
   }
 }
 
@@ -184,21 +184,33 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
 export async function getResponsibles(): Promise<Responsible[]> {
   try {
     const snap = await getDocs(collection(db, 'responsibles'));
+    if (snap.empty) {
+      return [
+        { id: 'resp-1', name: 'Ana Beatriz (Grêmio)', whatsapp: '+5511999998888', avatarUrl: MOCK_AVATARS[0] },
+        { id: 'resp-2', name: 'Lucas Pinho (Voluntário)', whatsapp: '+5511988887777', avatarUrl: MOCK_AVATARS[1] },
+        { id: 'resp-3', name: 'Clara Schmidt (Direção)', whatsapp: '+5511977776666', avatarUrl: MOCK_AVATARS[2] }
+      ];
+    }
     return snap.docs.map(doc => doc.data() as Responsible);
   } catch (error: any) {
-    handleFirestoreError(error, OperationType.GET, 'responsibles');
+    console.warn("Could not load responsibles from Firestore. Using static fallback: ", error.message || error);
+    return [
+      { id: 'resp-1', name: 'Ana Beatriz (Grêmio)', whatsapp: '+5511999998888', avatarUrl: MOCK_AVATARS[0] },
+      { id: 'resp-2', name: 'Lucas Pinho (Voluntário)', whatsapp: '+5511988887777', avatarUrl: MOCK_AVATARS[1] },
+      { id: 'resp-3', name: 'Clara Schmidt (Direção)', whatsapp: '+5511977776666', avatarUrl: MOCK_AVATARS[2] }
+    ];
   }
 }
 
 export async function addResponsible(name: string, whatsapp: string, avatarUrl?: string): Promise<Responsible> {
   try {
-    const randomAvatar = MOCK_AVATARS[Math.floor(Math.random() * MOCK_AVATARS.length)];
+    const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
     const id = `resp-${Date.now()}`;
     const newResp: Responsible = {
       id,
       name,
       whatsapp: whatsapp.trim(),
-      avatarUrl: avatarUrl || randomAvatar,
+      avatarUrl: (avatarUrl && avatarUrl.trim()) ? avatarUrl.trim() : defaultAvatar,
     };
     await setDoc(doc(db, 'responsibles', id), newResp);
     return newResp;
@@ -309,13 +321,13 @@ export async function submitLetter(
       // Insert Letter
       const newLetter: Letter = {
         id: letterId,
+        codeUsed: cleanCode,
         recipient,
         recipientClass,
         message,
         signature,
         writingType,
         isAnonymous,
-        senderName: isAnonymous ? "" : (senderName || ""),
         product: productType,
         createdAt: new Date().toISOString(),
         status: 'pending',

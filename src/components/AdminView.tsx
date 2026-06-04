@@ -24,7 +24,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   // Authentication
   const [adminEmail, setAdminEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('admin_authenticated') === 'true';
+  });
   const [authError, setAuthError] = useState('');
 
   // Allowed Admins list
@@ -57,6 +59,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   // New Responsible fields
   const [newRespName, setNewRespName] = useState('');
   const [newRespWhatsApp, setNewRespWhatsApp] = useState('');
+  const [newRespAvatarUrl, setNewRespAvatarUrl] = useState('');
   
   // Custom alerts or confirm dialogs
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -110,6 +113,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
       const isAllowed = await checkIsAllowedAdmin(emailLower);
       if (isAllowed) {
         setIsAuthenticated(true);
+        localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('admin_email', emailLower);
       } else {
         setAuthError('Acesso negado: e-mail não autorizado');
       }
@@ -159,9 +164,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
     if (!newRespName.trim()) return;
     if (!newRespWhatsApp.trim()) return;
 
-    await addResponsible(newRespName, newRespWhatsApp);
+    await addResponsible(newRespName, newRespWhatsApp, newRespAvatarUrl);
     setNewRespName('');
     setNewRespWhatsApp('');
+    setNewRespAvatarUrl('');
     await refreshAllData();
   };
 
@@ -256,11 +262,24 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
       
       {/* Admin Nav Toolbar Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-2xl bg-[#1f0306]/85 border border-[#FDF2F2]/10 shadow-2xl">
-        <div>
-          <span className="text-[10px] uppercase font-bold text-[#E53E3E] bg-[#E53E3E]/15 px-2.5 py-1 rounded-full border border-[#E53E3E]/20 tracking-wider">Painel Geral</span>
-          <h2 className="font-serif text-2xl font-semibold italic text-[#FDF2F2] mt-1.5 flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-[#E53E3E]" /> Arraial Correio Elegante Admins
-          </h2>
+        <div className="flex items-center justify-between gap-4 w-full md:w-auto">
+          <div>
+            <span className="text-[10px] uppercase font-bold text-[#E53E3E] bg-[#E53E3E]/15 px-2.5 py-1 rounded-full border border-[#E53E3E]/20 tracking-wider">Painel Geral</span>
+            <h2 className="font-serif text-xl sm:text-2xl font-semibold italic text-[#FDF2F2] mt-1.5 flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-[#E53E3E]" /> Arraial Correio Elegante Admins
+            </h2>
+          </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem('admin_authenticated');
+              localStorage.removeItem('admin_email');
+              setIsAuthenticated(false);
+            }}
+            className="px-3 py-1.5 rounded-lg border border-[#E53E3E]/30 bg-[#2d040a] hover:bg-rose-950/40 text-xs text-[#FDF2F2]/90 font-bold transition-all cursor-pointer flex items-center gap-1.5 h-10 shrink-0"
+            title="Sair do Painel"
+          >
+            <span>Sair</span>
+          </button>
         </div>
 
         {/* Tab links */}
@@ -721,6 +740,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                   onChange={(e) => setNewRespWhatsApp(e.target.value)}
                   className="w-full p-2.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306]"
                   required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Foto do Responsável (Link - Opcional)</label>
+                <input
+                  id="resp-add-avatar-input"
+                  type="text"
+                  placeholder="Ex: https://link-da-imagem.com/foto.png"
+                  value={newRespAvatarUrl}
+                  onChange={(e) => setNewRespAvatarUrl(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306]"
                 />
               </div>
 

@@ -10,6 +10,7 @@ service cloud.firestore {
     // Validation Functions
     function isValidLetter(data) {
       return data.keys().hasAll(['id', 'recipient', 'recipientClass', 'message', 'signature', 'writingType', 'isAnonymous', 'product', 'createdAt', 'status'])
+        && (!('codeUsed' in data.keys()) || (data.codeUsed is string && data.codeUsed.size() > 0))
         && data.recipient is string && data.recipient.size() > 0 && data.recipient.size() <= 150
         && data.recipientClass is string && data.recipientClass.size() > 0 && data.recipientClass.size() <= 150
         && data.message is string && data.message.size() > 0 && data.message.size() <= 500

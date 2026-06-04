@@ -34,6 +34,7 @@ export interface AccessCode {
 
 export interface Letter {
   id: string;
+  codeUsed?: string; // ID / Code used for safety auditing without link to payer
   recipient: string;
   recipientClass: string; // turma
   message: string;
