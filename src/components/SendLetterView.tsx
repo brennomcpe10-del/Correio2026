@@ -138,13 +138,13 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
       if (success) {
         setStep('success');
       } else {
-        alert('Infelizmente esse código já foi utilizado ou expirou. Tente novamente!');
+        setValidationError('Infelizmente esse código já foi utilizado ou expirou. Tente novamente!');
         // Reset
         setStep('validate');
         setCodeInputValue('');
       }
     } catch (err) {
-      alert('Ocorreu um erro de rede enviando sua cartinha. Ligue à rede e tente de novo!');
+      setFormError('Ocorreu um erro de rede enviando sua cartinha. Ligue à rede e tente de novo!');
     } finally {
       setIsSubmitting(false);
     }
