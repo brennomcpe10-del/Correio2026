@@ -30,9 +30,12 @@ const MOCK_AVATARS = [
 // Seed initial data to Firestore if they are empty
 export async function initLocalStorage() {
   try {
+    alert("Enviando dados para o Firebase (initLocalStorage - Início)...");
+
     // 1. Bootstrapping Responsibles
     const respSnap = await getDocs(collection(db, 'responsibles'));
     if (respSnap.empty) {
+      alert("Enviando dados para o Firebase (initLocalStorage - Bootstrapping Responsibles)...");
       const batch = writeBatch(db);
       const initialResponsibles: Responsible[] = [
         {
@@ -63,6 +66,7 @@ export async function initLocalStorage() {
     // 2. Bootstrapping Access Codes
     const codesSnap = await getDocs(collection(db, 'accessCodes'));
     if (codesSnap.empty) {
+      alert("Enviando dados para o Firebase (initLocalStorage - Bootstrapping Access Codes)...");
       const batch = writeBatch(db);
       const initialCodes: AccessCode[] = [
         { code: 'CE-AMOR-E202', product: 'Cartinha + Trufa + Rosa', createdAt: new Date(Date.now() - 3600000 * 2).toISOString(), status: 'active' },
@@ -82,6 +86,7 @@ export async function initLocalStorage() {
     // 3. Bootstrapping Letters
     const lettersSnap = await getDocs(collection(db, 'letters'));
     if (lettersSnap.empty) {
+      alert("Enviando dados para o Firebase (initLocalStorage - Bootstrapping Letters)...");
       const batch = writeBatch(db);
       const initialLetters: Letter[] = [
         {
@@ -131,6 +136,7 @@ export async function initLocalStorage() {
     // 4. Bootstrapping Allowed Admins
     const adminsSnap = await getDocs(collection(db, 'allowedAdmins'));
     if (adminsSnap.empty) {
+      alert("Enviando dados para o Firebase (initLocalStorage - Bootstrapping Allowed Admins)...");
       const batch = writeBatch(db);
       const defaultAdmins = ['brennomcpe10@gmail.com', 'admin@escola.com.br'];
       defaultAdmins.forEach(email => {
@@ -138,15 +144,18 @@ export async function initLocalStorage() {
       });
       await batch.commit();
     }
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (initLocalStorage): " + error.message);
     handleFirestoreError(error, OperationType.WRITE, 'bootstrap');
   }
 }
 
 export async function forceRecreateEmptyCollections(): Promise<void> {
   try {
+    alert("Consultando o Firebase (forceRecreateEmptyCollections)...");
     const codesSnap = await getDocs(collection(db, 'accessCodes'));
     if (codesSnap.empty) {
+      alert("Enviando dados para o Firebase (forceRecreateEmptyCollections - Criando CE-TESTE-2026)...");
       // Create test access code CE-TESTE-2026
       const testCode: AccessCode = {
         code: 'CE-TESTE-2026',
@@ -159,6 +168,7 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
       // Create test letter to force creation of 'letters' collection
       const lettersSnap = await getDocs(collection(db, 'letters'));
       if (lettersSnap.empty) {
+        alert("Enviando dados para o Firebase (forceRecreateEmptyCollections - Criando let-test-2026)...");
         const testLetter: Letter = {
           id: 'let-test-2026',
           recipient: 'Cupido de Teste',
@@ -174,7 +184,8 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
         await setDoc(doc(db, 'letters', 'let-test-2026'), testLetter);
       }
     }
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (forceRecreateEmptyCollections): " + error.message);
     console.warn("Could not force-recreate collections: ", error);
   }
 }
@@ -182,9 +193,11 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
 // RESPONSIBLES API
 export async function getResponsibles(): Promise<Responsible[]> {
   try {
+    alert("Consultando o Firebase (getResponsibles)...");
     const snap = await getDocs(collection(db, 'responsibles'));
     return snap.docs.map(doc => doc.data() as Responsible);
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (getResponsibles): " + error.message);
     handleFirestoreError(error, OperationType.GET, 'responsibles');
   }
 }
@@ -199,17 +212,21 @@ export async function addResponsible(name: string, whatsapp: string, avatarUrl?:
       whatsapp: whatsapp.trim(),
       avatarUrl: avatarUrl || randomAvatar,
     };
+    alert("Enviando dados para o Firebase (addResponsible)...");
     await setDoc(doc(db, 'responsibles', id), newResp);
     return newResp;
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (addResponsible): " + error.message);
     handleFirestoreError(error, OperationType.WRITE, 'responsibles');
   }
 }
 
 export async function deleteResponsible(id: string): Promise<void> {
   try {
+    alert("Enviando dados para o Firebase (deleteResponsible)...");
     await deleteDoc(doc(db, 'responsibles', id));
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (deleteResponsible): " + error.message);
     handleFirestoreError(error, OperationType.DELETE, `responsibles/${id}`);
   }
 }
@@ -217,9 +234,11 @@ export async function deleteResponsible(id: string): Promise<void> {
 // ACCESS CODES API
 export async function getAccessCodes(): Promise<AccessCode[]> {
   try {
+    alert("Consultando o Firebase (getAccessCodes)...");
     const snap = await getDocs(query(collection(db, 'accessCodes'), orderBy('createdAt', 'desc')));
     return snap.docs.map(doc => doc.data() as AccessCode);
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (getAccessCodes): " + error.message);
     handleFirestoreError(error, OperationType.GET, 'accessCodes');
   }
 }
@@ -244,15 +263,18 @@ export async function generateCode(product: ProductType): Promise<string> {
       status: 'active'
     };
     
+    alert("Enviando dados para o Firebase (generateCode)...");
     await setDoc(doc(db, 'accessCodes', formattedCode), newCode);
     return formattedCode;
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (generateCode): " + error.message);
     handleFirestoreError(error, OperationType.WRITE, 'accessCodes');
   }
 }
 
 export async function validateCode(codeString: string): Promise<AccessCode | null> {
   try {
+    alert("Consultando o Firebase (validateCode)...");
     const cleanCode = codeString.toUpperCase().trim();
     const docRef = doc(db, 'accessCodes', cleanCode);
     const snap = await getDoc(docRef);
@@ -263,7 +285,8 @@ export async function validateCode(codeString: string): Promise<AccessCode | nul
       }
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (validateCode): " + error.message);
     handleFirestoreError(error, OperationType.GET, `accessCodes/${codeString}`);
   }
 }
@@ -271,9 +294,11 @@ export async function validateCode(codeString: string): Promise<AccessCode | nul
 // LETTERS API
 export async function getLetters(): Promise<Letter[]> {
   try {
+    alert("Consultando o Firebase (getLetters)...");
     const snap = await getDocs(query(collection(db, 'letters'), orderBy('recipient', 'asc')));
     return snap.docs.map(doc => doc.data() as Letter);
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (getLetters): " + error.message);
     handleFirestoreError(error, OperationType.GET, 'letters');
   }
 }
@@ -296,6 +321,7 @@ export async function submitLetter(
   const letterRef = doc(db, 'letters', letterId);
 
   try {
+    alert("Enviando dados para o Firebase (submitLetter)...");
     const success = await runTransaction(db, async (transaction) => {
       const codeSnap = await transaction.get(codeRef);
       if (!codeSnap.exists() || codeSnap.data().status !== 'active') {
@@ -325,17 +351,20 @@ export async function submitLetter(
     });
 
     return success;
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (submitLetter): " + error.message);
     handleFirestoreError(error, OperationType.WRITE, 'submission');
   }
 }
 
 export async function updateLetterStatus(id: string, status: 'pending' | 'completed'): Promise<boolean> {
   try {
+    alert("Enviando dados para o Firebase (updateLetterStatus)...");
     const docRef = doc(db, 'letters', id);
     await updateDoc(docRef, { status });
     return true;
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (updateLetterStatus): " + error.message);
     handleFirestoreError(error, OperationType.UPDATE, `letters/${id}`);
   }
 }
@@ -348,6 +377,7 @@ export async function getStats(): Promise<{
   productSummary: { product: ProductType; count: number; revenue: number }[];
 }> {
   try {
+    alert("Consultando o Firebase (getStats)...");
     const [lettersSnap, codesSnap] = await Promise.all([
       getDocs(collection(db, 'letters')),
       getDocs(collection(db, 'accessCodes'))
@@ -404,7 +434,8 @@ export async function getStats(): Promise<{
         revenue: value.revenue,
       }))
     };
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (getStats): " + error.message);
     handleFirestoreError(error, OperationType.GET, 'stats');
   }
 }
@@ -412,9 +443,11 @@ export async function getStats(): Promise<{
 // ALLOWED ADMINS API
 export async function getAllowedAdmins(): Promise<string[]> {
   try {
+    alert("Consultando o Firebase (getAllowedAdmins)...");
     const snap = await getDocs(collection(db, 'allowedAdmins'));
     return snap.docs.map(doc => doc.id);
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (getAllowedAdmins): " + error.message);
     handleFirestoreError(error, OperationType.GET, 'allowedAdmins');
     return [];
   }
@@ -424,8 +457,10 @@ export async function addAllowedAdmin(email: string): Promise<void> {
   try {
     const cleanEmail = email.toLowerCase().trim();
     if (!cleanEmail) return;
+    alert("Enviando dados para o Firebase (addAllowedAdmin)...");
     await setDoc(doc(db, 'allowedAdmins', cleanEmail), { email: cleanEmail, createdAt: new Date().toISOString() });
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (addAllowedAdmin): " + error.message);
     handleFirestoreError(error, OperationType.WRITE, 'allowedAdmins');
   }
 }
@@ -433,20 +468,24 @@ export async function addAllowedAdmin(email: string): Promise<void> {
 export async function removeAllowedAdmin(email: string): Promise<void> {
   const cleanEmail = email.toLowerCase().trim();
   try {
+    alert("Enviando dados para o Firebase (removeAllowedAdmin)...");
     await deleteDoc(doc(db, 'allowedAdmins', cleanEmail));
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (removeAllowedAdmin): " + error.message);
     handleFirestoreError(error, OperationType.DELETE, `allowedAdmins/${cleanEmail}`);
   }
 }
 
 export async function checkIsAllowedAdmin(email: string): Promise<boolean> {
   try {
+    alert("Consultando o Firebase (checkIsAllowedAdmin)...");
     const cleanEmail = email.toLowerCase().trim();
     if (!cleanEmail) return false;
     const docRef = doc(db, 'allowedAdmins', cleanEmail);
     const snap = await getDoc(docRef);
     return snap.exists();
-  } catch (error) {
+  } catch (error: any) {
+    alert("Erro no Firebase (checkIsAllowedAdmin): " + error.message);
     handleFirestoreError(error, OperationType.GET, `allowedAdmins/${email}`);
     return false;
   }
