@@ -12,6 +12,59 @@ interface HomeViewProps {
   responsibles: Responsible[];
 }
 
+interface ResponsibleAvatarProps {
+  src?: string;
+  alt: string;
+  className?: string;
+}
+
+const ResponsibleAvatar: React.FC<ResponsibleAvatarProps> = ({ src, alt, className }) => {
+  const [error, setError] = useState(false);
+
+  // Fallback rendering
+  const renderFallback = () => {
+    return (
+      <div 
+        className={`bg-zinc-800 text-[#FDF2F2]/40 flex items-center justify-center shrink-0 ${className} select-none`}
+        title={alt}
+      >
+        <span className="text-sm font-semibold">👤</span>
+      </div>
+    );
+  };
+
+  if (error || !src) {
+    return renderFallback();
+  }
+
+  const getSafeSrc = (url: string): string => {
+    const trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('data:image/')) {
+      return trimmed;
+    }
+    if (trimmed.length > 50) {
+      return `data:image/jpeg;base64,${trimmed}`;
+    }
+    return trimmed;
+  };
+
+  return (
+    <img
+      src={getSafeSrc(src)}
+      alt={alt}
+      className={className}
+      onError={() => {
+        console.warn(`Failed to load avatar for ${alt}`);
+        setError(true);
+      }}
+      referrerPolicy="no-referrer"
+    />
+  );
+};
+
 export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles }) => {
   const [showFAQ, setShowFAQ] = useState(false);
   const [showResponsibles, setShowResponsibles] = useState(false);
@@ -293,11 +346,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
                       className="p-4 rounded-3xl bg-[#2d040a]/25 hover:bg-emerald-950/20 hover:border-emerald-500/30 border border-[#FDF2F2]/10 flex items-center gap-4 transition-all group cursor-pointer text-left w-full h-full"
                     >
                       <div className="relative shrink-0">
-                        <img 
+                        <ResponsibleAvatar 
                           src={resp.avatarUrl} 
                           alt={resp.name}
                           className="h-14 w-14 rounded-full object-cover shadow-md border-2 border-[#E53E3E] group-hover:border-emerald-500 transition-colors"
-                          referrerPolicy="no-referrer"
                         />
                         <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1 rounded-full border border-[#1f0306] shadow">
                           <Phone className="h-3 w-3 fill-current text-white shrink-0" />

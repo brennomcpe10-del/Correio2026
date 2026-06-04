@@ -21,6 +21,59 @@ interface AdminViewProps {
   responsiblesList: Responsible[];
 }
 
+interface ResponsibleAvatarProps {
+  src?: string;
+  alt: string;
+  className?: string;
+}
+
+const ResponsibleAvatar: React.FC<ResponsibleAvatarProps> = ({ src, alt, className }) => {
+  const [error, setError] = useState(false);
+
+  // Fallback rendering
+  const renderFallback = () => {
+    return (
+      <div 
+        className={`bg-zinc-800 text-[#FDF2F2]/40 flex items-center justify-center shrink-0 ${className} select-none`}
+        title={alt}
+      >
+        <span className="text-xs font-semibold">👤</span>
+      </div>
+    );
+  };
+
+  if (error || !src) {
+    return renderFallback();
+  }
+
+  const getSafeSrc = (url: string): string => {
+    const trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('data:image/')) {
+      return trimmed;
+    }
+    if (trimmed.length > 50) {
+      return `data:image/jpeg;base64,${trimmed}`;
+    }
+    return trimmed;
+  };
+
+  return (
+    <img
+      src={getSafeSrc(src)}
+      alt={alt}
+      className={className}
+      onError={() => {
+        console.warn(`Failed to load avatar for ${alt}`);
+        setError(true);
+      }}
+      referrerPolicy="no-referrer"
+    />
+  );
+};
+
 export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsiblesList }) => {
   // Authentication
   const [adminEmail, setAdminEmail] = useState('');
@@ -64,7 +117,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const resizeImage = (file: File, maxWidth: number = 200, maxHeight: number = 200): Promise<string> => {
+  const resizeImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -73,23 +126,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
+          canvas.width = 150;
+          canvas.height = 150;
 
           const ctx = canvas.getContext('2d');
           if (!ctx) {
@@ -97,8 +135,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
             return;
           }
 
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          // Center crop to a 150x150 square for perfect circular avatars
+          const size = Math.min(img.width, img.height);
+          const sx = (img.width - size) / 2;
+          const sy = (img.height - size) / 2;
+
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, 150, 150);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
           resolve(compressedBase64);
         };
         img.onerror = (err) => {
@@ -123,7 +166,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
     try {
       setIsUploading(true);
-      const compressedBase64 = await resizeImage(file, 200, 200);
+      const compressedBase64 = await resizeImage(file);
       setNewRespAvatarUrl(compressedBase64);
     } catch (err: any) {
       console.error("Erro ao converter e comprimir imagem:", err);
@@ -833,11 +876,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                   </div>
                 ) : newRespAvatarUrl ? (
                   <div className="flex items-center gap-4 p-3 rounded-xl border border-[#FDF2F2]/10 bg-[#2d040a]/40 animate-fade-in">
-                    <img
+                    <ResponsibleAvatar
                       src={newRespAvatarUrl}
                       alt="Prévia do Responsável"
                       className="h-16 w-16 rounded-full object-cover border-2 border-[#E53E3E] shadow-md shrink-0"
-                      referrerPolicy="no-referrer"
                     />
                     <div className="flex-1 space-y-1">
                       <p className="text-[10px] uppercase font-bold tracking-widest text-[#FDF2F2]/40">Foto Selecionada</p>
@@ -897,11 +939,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                   className="p-4 rounded-xl border border-[#FDF2F2]/5 bg-[#2d040a]/20 flex items-center justify-between hover:border-[#E53E3E]/20 transition-all shadow-sm"
                 >
                   <div className="flex items-center gap-3">
-                    <img 
+                    <ResponsibleAvatar 
                       src={resp.avatarUrl} 
                       alt={resp.name} 
                       className="h-10 w-10 rounded-full object-cover border border-[#E53E3E]/60 shadow-md" 
-                      referrerPolicy="no-referrer"
                     />
                     <div>
                       <h4 className="font-sans font-bold text-sm text-[#FDF2F2] leading-tight">{resp.name}</h4>
