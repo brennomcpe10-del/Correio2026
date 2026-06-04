@@ -143,6 +143,42 @@ export async function initLocalStorage() {
   }
 }
 
+export async function forceRecreateEmptyCollections(): Promise<void> {
+  try {
+    const codesSnap = await getDocs(collection(db, 'accessCodes'));
+    if (codesSnap.empty) {
+      // Create test access code CE-TESTE-2026
+      const testCode: AccessCode = {
+        code: 'CE-TESTE-2026',
+        product: 'Cartinha',
+        createdAt: new Date().toISOString(),
+        status: 'active'
+      };
+      await setDoc(doc(db, 'accessCodes', 'CE-TESTE-2026'), testCode);
+
+      // Create test letter to force creation of 'letters' collection
+      const lettersSnap = await getDocs(collection(db, 'letters'));
+      if (lettersSnap.empty) {
+        const testLetter: Letter = {
+          id: 'let-test-2026',
+          recipient: 'Cupido de Teste',
+          recipientClass: '1°A',
+          message: 'Esta é uma carta inicial de teste para forçar a criação da coleção no Firebase após limpeza.',
+          signature: 'Anônimo',
+          writingType: 'printed',
+          isAnonymous: true,
+          product: 'Cartinha',
+          createdAt: new Date().toISOString(),
+          status: 'pending'
+        };
+        await setDoc(doc(db, 'letters', 'let-test-2026'), testLetter);
+      }
+    }
+  } catch (error) {
+    console.warn("Could not force-recreate collections: ", error);
+  }
+}
+
 // RESPONSIBLES API
 export async function getResponsibles(): Promise<Responsible[]> {
   try {

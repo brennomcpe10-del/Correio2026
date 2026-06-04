@@ -8,7 +8,7 @@ import { Header } from './components/Header';
 import { HomeView } from './components/HomeView';
 import { SendLetterView } from './components/SendLetterView';
 import { AdminView } from './components/AdminView';
-import { getResponsibles, initLocalStorage } from './lib/storage';
+import { getResponsibles, initLocalStorage, forceRecreateEmptyCollections } from './lib/storage';
 import { Responsible } from './types';
 import { Sparkles, Heart } from 'lucide-react';
 
@@ -20,6 +20,7 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       await initLocalStorage();
+      await forceRecreateEmptyCollections();
       const res = await getResponsibles();
       setResponsibles(res);
     };
