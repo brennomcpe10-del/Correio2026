@@ -656,7 +656,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               <span>Selo de Anonimato Total Ativo</span>
             </div>
             <p>
-              Em conformidade com as regras do Correio Elegante do Arraial, o seu código <span className="font-mono font-bold bg-[#1f0306] p-0.5 px-1.5 rounded border border-[#FDF2F2]/10 text-white">{validatedCode}</span> foi **completamente queimado/consumido** e não existe mais nenhuma ligação entre ele e as palavras escritas no bilhete que você acabou de enviar!
+              Sua mensagem foi guardada com sucesso na mochila do cupido! O código que você utilizou já foi validado e desativado para garantir o seu anonimato total. Agora é só esperar o Cupido fazer a mágica dele no dia do evento!
             </p>
           </div>
 
