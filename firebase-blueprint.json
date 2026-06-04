@@ -101,6 +101,10 @@
           "type": "string",
           "enum": ["pending", "completed"],
           "description": "Current status of delivery or revision"
+        },
+        "readAloud": {
+          "type": "boolean",
+          "description": "Whether the user wants their letter content read aloud in the school patio"
         }
       },
       "required": ["id", "recipient", "recipientClass", "message", "signature", "writingType", "isAnonymous", "product", "createdAt", "status"]
