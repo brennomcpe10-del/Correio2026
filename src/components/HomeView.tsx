@@ -16,6 +16,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
   const [showFAQ, setShowFAQ] = useState(false);
   const [showResponsibles, setShowResponsibles] = useState(false);
   const [faqOpened, setFaqOpened] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Stepper Tutorial Steps (1 to 7)
   const steps = [
@@ -159,27 +160,52 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
           </div>
 
           {/* Interactive Play Video Board */}
-          <div className="relative w-full aspect-video rounded-xl bg-black/60 border border-[#FDF2F2]/10 overflow-hidden flex flex-col items-center justify-center group my-4 shadow-inner">
-            <div className="absolute inset-0 bg-cover bg-center brightness-40 contrast-125 filter blur-[1px] transition-all group-hover:scale-105" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&q=80&w=300')` }}></div>
-            
-            {/* Sealed wax cover icon overlay */}
-            <div className="relative z-10 flex flex-col items-center justify-center space-y-2 cursor-pointer">
-              <div className="h-14 w-14 rounded-full bg-[#E53E3E] hover:bg-[#9B1C31] text-white flex items-center justify-center shadow-lg group-hover:scale-110 active:scale-95 transition-all outline-2 outline-offset-4 outline-[#E53E3E]/30">
-                <Play className="h-5 w-5 fill-white ml-0.5 transition-transform" />
-              </div>
-              <span className="text-[9px] font-sans uppercase font-bold tracking-widest text-[#FDF2F2]/80 select-none bg-black/60 px-2.5 py-1 rounded-full">
-                Play Tutorial
-              </span>
-            </div>
-            
-            <div className="absolute bottom-2 right-2 text-[8px] text-[#FDF2F2]/40 bg-black/50 px-1.5 py-0.5 rounded leading-none">
-              Vídeo Demonstrativo
-            </div>
+          <div className="relative w-full aspect-video rounded-xl bg-black/60 border border-[#FDF2F2]/10 overflow-hidden flex flex-col items-center justify-center group my-4 shadow-inner" id="tutorial-video-container">
+            {isPlaying ? (
+              <video 
+                src="/tutorial.mp4" 
+                controls 
+                autoPlay 
+                className="absolute inset-0 w-full h-full z-20 bg-black"
+                id="tutorial-video-player"
+              >
+                <source src="/tutorial.mp4" type="video/mp4" />
+                <source src="/video.mp4" type="video/mp4" />
+                Seu navegador não suporta a tag de vídeo.
+              </video>
+            ) : (
+              <>
+                <div 
+                  id="tutorial-video-background"
+                  onClick={() => setIsPlaying(true)}
+                  className="absolute inset-0 bg-cover bg-center brightness-40 contrast-125 filter blur-[1px] transition-all group-hover:scale-105 cursor-pointer" 
+                  style={{ backgroundImage: `url('https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&q=80&w=300')` }}
+                ></div>
+                
+                {/* Sealed wax cover icon overlay */}
+                <div 
+                  id="play-button-overlay"
+                  onClick={() => setIsPlaying(true)}
+                  className="relative z-10 flex flex-col items-center justify-center space-y-2 cursor-pointer"
+                >
+                  <div className="h-14 w-14 rounded-full bg-[#E53E3E] hover:bg-[#9B1C31] text-white flex items-center justify-center shadow-lg group-hover:scale-110 active:scale-95 transition-all outline-2 outline-offset-4 outline-[#E53E3E]/30">
+                    <Play className="h-5 w-5 fill-white ml-0.5 transition-transform" />
+                  </div>
+                  <span className="text-[9px] font-sans uppercase font-bold tracking-widest text-[#FDF2F2]/80 select-none bg-black/60 px-2.5 py-1 rounded-full">
+                    Play Tutorial
+                  </span>
+                </div>
+                
+                <div className="absolute bottom-2 right-2 text-[8px] text-[#FDF2F2]/40 bg-black/50 px-1.5 py-0.5 rounded leading-none pointer-events-none">
+                  Vídeo Demonstrativo
+                </div>
+              </>
+            )}
           </div>
 
           <div className="text-[10px] text-[#FDF2F2]/40 border-t border-[#FDF2F2]/10 pt-3 flex items-center gap-1 text-center justify-center">
             <Info className="h-3 w-3 inline text-[#E53E3E]" />
-            <span>Futuramente seu organizador poderá vincular uma gravação real aqui!</span>
+            <span>Assista ao vídeo para aprender em um minuto como enviar o Correio Elegante!</span>
           </div>
         </div>
       </div>
