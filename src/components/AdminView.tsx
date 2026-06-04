@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Lock, LogIn, BarChart3, QrCode, MailOpen, Users2, Copy, Check, 
-  Plus, Trash2, Search, Filter, CheckCircle2, ShieldAlert, Undo2, TrendingUp, AlertTriangle
+  Plus, Trash2, Search, Filter, CheckCircle2, ShieldAlert, Undo2, TrendingUp, AlertTriangle,
+  Upload, X, Camera
 } from 'lucide-react';
 import { 
   getStats, getAccessCodes, generateCode, getLetters, updateLetterStatus, 
@@ -60,6 +61,77 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   const [newRespName, setNewRespName] = useState('');
   const [newRespWhatsApp, setNewRespWhatsApp] = useState('');
   const [newRespAvatarUrl, setNewRespAvatarUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resizeImage = (file: File, maxWidth: number = 200, maxHeight: number = 200): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(compressedBase64);
+        };
+        img.onerror = (err) => {
+          reject(err);
+        };
+      };
+      reader.onerror = (err) => {
+        reject(err);
+      };
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido.');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const compressedBase64 = await resizeImage(file, 200, 200);
+      setNewRespAvatarUrl(compressedBase64);
+    } catch (err: any) {
+      console.error("Erro ao converter e comprimir imagem:", err);
+      alert("Houve um problema ao carregar a imagem. Tente novamente.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
   
   // Custom alerts or confirm dialogs
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -744,15 +816,60 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Foto do Responsável (Link - Opcional)</label>
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Foto do Responsável (Opcional)</label>
                 <input
-                  id="resp-add-avatar-input"
-                  type="text"
-                  placeholder="Ex: https://link-da-imagem.com/foto.png"
-                  value={newRespAvatarUrl}
-                  onChange={(e) => setNewRespAvatarUrl(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] text-xs text-white bg-[#1f0306]"
+                  ref={fileInputRef}
+                  id="resp-add-avatar-file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
+                
+                {isUploading ? (
+                  <div className="border border-[#FDF2F2]/10 p-4 rounded-xl flex flex-col items-center justify-center gap-2 bg-[#2d040a]/20 animate-pulse">
+                    <div className="h-5 w-5 border-2 border-t-transparent border-[#E53E3E] rounded-full animate-spin"></div>
+                    <span className="text-[10px] text-[#FDF2F2]/40 uppercase tracking-widest font-bold">Processando imagem...</span>
+                  </div>
+                ) : newRespAvatarUrl ? (
+                  <div className="flex items-center gap-4 p-3 rounded-xl border border-[#FDF2F2]/10 bg-[#2d040a]/40 animate-fade-in">
+                    <img
+                      src={newRespAvatarUrl}
+                      alt="Prévia do Responsável"
+                      className="h-16 w-16 rounded-full object-cover border-2 border-[#E53E3E] shadow-md shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="flex-1 space-y-1">
+                      <p className="text-[10px] uppercase font-bold tracking-widest text-[#FDF2F2]/40">Foto Selecionada</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewRespAvatarUrl('');
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                        className="text-xs font-bold text-[#E53E3E] hover:text-[#9B1C31] transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Remover</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border border-[#FDF2F2]/10 hover:border-[#E53E3E]/50 rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#2d040a]/25 hover:bg-[#2d040a]/40 transition-all text-center"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-[#E53E3E]/10 flex items-center justify-center text-[#E53E3E]">
+                      <Camera className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-[#FDF2F2]">Escolher Imagem</p>
+                      <p className="text-[10px] text-[#FDF2F2]/40">Clique para selecionar foto local</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button
