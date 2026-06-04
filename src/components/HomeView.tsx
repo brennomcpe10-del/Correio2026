@@ -154,7 +154,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
               <span>📺</span> Tutorial do Cupido
             </h3>
             <p className="text-xs text-[#FDF2F2]/60 leading-relaxed">
-              Assista no vídeo explicativo quais são as melhores cantadas, as regras do arraial e como fazer um pedido romântico perfeito!
+              Assista tutorial completo em vídeo!
             </p>
           </div>
 
