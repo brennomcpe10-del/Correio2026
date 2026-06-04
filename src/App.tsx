@@ -113,7 +113,7 @@ export default function App() {
       {/* Elegant Arraial Footer */}
       <footer className="relative z-10 bg-[#1F0306] border-t border-[#FDF2F2]/10 py-6 text-center shadow-2xl">
         <p className="text-xs text-rose-200/40 font-sans tracking-wide">
-          © {new Date().getFullYear()} Correio Elegante do Arraial • Desenvolvido com ❤️ para a Festa Junina Escolar.
+          © {new Date().getFullYear()} Correio Elegante do CECB • Desenvolvido com ❤️ para a Festa Junina Escolar.
         </p>
         <p className="text-[10px] text-pink-300/60 mt-1.5 uppercase font-semibold tracking-wider flex items-center justify-center gap-2">
           <span>🔒 Sistema 100% Anônimo</span>

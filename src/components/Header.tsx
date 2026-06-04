@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, setView }) => {
                 Correio Elegante
               </span>
               <span className="text-[7.5px] sm:text-[9px] font-sans tracking-[0.1em] sm:tracking-[0.2em] text-[#FDF2F2]/60 uppercase font-semibold leading-none mt-0.5">
-                Arraial Escolar 2026
+                Arraial CECB 2026
               </span>
             </div>
           </div>

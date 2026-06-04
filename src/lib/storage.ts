@@ -285,7 +285,38 @@ export async function validateCode(codeString: string): Promise<AccessCode | nul
 export async function getLetters(): Promise<Letter[]> {
   try {
     const snap = await getDocs(query(collection(db, 'cartas_arraial'), orderBy('recipient', 'asc')));
-    return snap.docs.map(doc => doc.data() as Letter);
+    const allLetters = snap.docs.map(doc => doc.data() as Letter);
+    
+    // Apply "Visual Delay" security strategy
+    const pendingLetters = allLetters.filter(l => l.status === 'pending');
+    const totalPendingCount = pendingLetters.length;
+    
+    const nowMs = Date.now();
+    const ageThresholdMs = 20 * 60 * 1000; // 20 minutes in milliseconds
+    
+    return allLetters.filter(letter => {
+      // Completed/Archived letters are always visible
+      if (letter.status !== 'pending') {
+        return true;
+      }
+      
+      // If we have an accumulated pool of 4 or more pending letters, reveal them all immediately to the team 
+      if (totalPendingCount >= 4) {
+        return true;
+      }
+      
+      // Otherwise, only allow if the letter is more than 20 minutes old
+      if (!letter.createdAt) {
+        return false;
+      }
+      
+      const createdMs = Date.parse(letter.createdAt);
+      if (isNaN(createdMs)) {
+        return false;
+      }
+      
+      return (nowMs - createdMs) >= ageThresholdMs;
+    });
   } catch (error: any) {
     handleFirestoreError(error, OperationType.GET, 'cartas_arraial');
   }

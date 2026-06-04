@@ -282,11 +282,11 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
             {/* Recipient Details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Nome do Destinatário *</label>
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">NOME DO DESTINATÁRIO (Quem vai receber) *</label>
                 <input
                   id="recipient-input"
                   type="text"
-                  placeholder="Ex: Júlia Maria / Professora Cláudia"
+                  placeholder="EX: Júlia Maria"
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
                   className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/40 shadow-inner outline-none placeholder:text-[#FDF2F2]/25"
@@ -295,7 +295,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Turma / Sala / Setor *</label>
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">TURMA/SALA *</label>
                 <select
                   id="recipient-class-input"
                   value={recipientClass}
@@ -303,7 +303,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                   className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/72 shadow-inner outline-none font-sans"
                   required
                 >
-                  <option value="" disabled className="text-gray-400 bg-[#1f0306]">Selecione a Turma</option>
+                  <option value="" disabled className="text-gray-400 bg-[#1f0306]">Selecione a Turma/Sala</option>
                   <option value="1°A" className="text-white bg-[#1f0306]">1°A</option>
                   <option value="1°B" className="text-white bg-[#1f0306]">1°B</option>
                   <option value="2°A EPT" className="text-white bg-[#1f0306]">2°A EPT</option>
@@ -359,7 +359,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                       }}
                       className="accent-[#E53E3E] h-4 w-4 shrink-0"
                     />
-                    <span>Sim (Enviar como Seguro 100% Anônimo)</span>
+                    <span>Sim (Não quero identificar meu nome)</span>
                   </label>
                   <label className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 hover:bg-[#2d040a]/40 transition-all cursor-pointer text-xs font-bold text-[#FDF2F2]/90 flex-1">
                     <input
@@ -372,7 +372,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                       }}
                       className="accent-[#E53E3E] h-4 w-4 shrink-0"
                     />
-                    <span>Não (Identificar meu nome no bilhete)</span>
+                    <span>Não (Eu quero identificar meu nome no bilhete)</span>
                   </label>
                 </div>
 
@@ -544,7 +544,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
 
             {/* Letter Header */}
             <div className="flex justify-between items-start border-b border-[#ebd29c] pb-4 font-serif text-xs italic text-[#be123c] font-semibold tracking-wide">
-              <span>💌 Correio Elegante do Arraial</span>
+              <span>💌 Correio Elegante do CECB</span>
               <span className="font-sans font-bold not-italic bg-[#E53E3E]/10 text-[#E53E3E] py-0.5 px-2 rounded text-[9px] uppercase border border-[#E53E3E]/20">
                 {writingType === 'handwritten' ? 'Cursive Escrita' : 'Impressa'}
               </span>
@@ -559,7 +559,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                 </span>
               </div>
               <div className="flex gap-1.5 items-end">
-                <span className="font-sans text-xs font-bold uppercase tracking-wider text-amber-950/70 font-semibold">Turma:</span>
+                <span className="font-sans text-xs font-bold uppercase tracking-wider text-amber-950/70 font-semibold">TURMA/SALA:</span>
                 <span className="font-sans text-xs sm:text-sm font-semibold text-gray-700 pl-1">
                   {recipientClass}
                 </span>

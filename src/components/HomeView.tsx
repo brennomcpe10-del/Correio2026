@@ -54,7 +54,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
   // Assistência de formatação de WhastApp link
   const getWhatsAppLink = (phone: string, name: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    const message = encodeURIComponent(`Olá ${name}! Gostaria de adquirir um código para o Correio Elegante do Arraial!`);
+    const message = encodeURIComponent(`Olá ${name}! Gostaria de adquirir um código para o Correio Elegante do CECB!`);
     return `https://wa.me/${cleanPhone}?text=${message}`;
   };
 
@@ -77,7 +77,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
             <Heart className="h-3 w-3 fill-[#E53E3E] text-[#E53E3E]" /> Especial de Festa Junina
           </div>
           <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl italic font-semibold text-[#FDF2F2] tracking-wide">
-            Correio Elegante <span className="text-[#E53E3E] not-italic">do Arraial</span>
+            Correio Elegante <span className="text-[#E53E3E] not-italic">do CECB</span>
           </h1>
           <p className="font-sans text-xs sm:text-base text-[#FDF2F2]/70 max-w-lg mx-auto">
             O mistério do anonimato aliado à doçura do Arraial. Escolha seu presente e aqueça os corações mais cobiçados do colégio. 💖
