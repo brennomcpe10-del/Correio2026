@@ -381,7 +381,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               <textarea
                 id="message-input"
                 rows={4}
-                maxLength={400}
+                maxLength={1000}
                 placeholder="Declare seu amor, amizade ou escreva uma cantada inesquecível de São João..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -389,7 +389,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                 required
               />
               <span className="block text-[10px] text-right text-[#FDF2F2]/40 font-mono">
-                {message.length}/400 caracteres
+                {message.length}/1000 caracteres
               </span>
             </div>
 
