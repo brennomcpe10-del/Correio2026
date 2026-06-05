@@ -332,7 +332,8 @@ export async function submitLetter(
   isAnonymous: boolean,
   senderName: string,
   productType: ProductType,
-  codeString: string
+  codeString: string,
+  readAloud?: boolean
 ): Promise<boolean> {
   const cleanCode = codeString.toUpperCase().trim();
   const codeRef = doc(db, 'codigos_arraial', cleanCode);
@@ -362,6 +363,7 @@ export async function submitLetter(
         product: productType,
         createdAt: new Date().toISOString(),
         status: 'pending',
+        readAloud: !!readAloud,
       };
       
       transaction.set(letterRef, newLetter);

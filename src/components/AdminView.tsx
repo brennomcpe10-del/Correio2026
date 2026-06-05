@@ -732,6 +732,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                           <span className="text-[10px] font-sans font-semibold text-[#FDF2F2]/80 bg-[#E53E3E]/10 px-1.5 py-0.5 rounded inline-block mt-2 border border-[#E53E3E]/20">
                             👤 {letter.recipientClass}
                           </span>
+                          {letter.readAloud ? (
+                            <span className="text-[10px] font-sans font-bold text-white bg-green-700/80 px-1.5 py-0.5 rounded inline-block mt-2 border border-green-500/30 ml-1.5 animate-pulse">
+                              📢 LER NO PÁTIO
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-sans font-medium text-[#FDF2F2]/50 bg-zinc-800/60 px-1.5 py-0.5 rounded inline-block mt-2 border border-zinc-700/30 ml-1.5">
+                              🔕 Entrega Privada/Silenciosa
+                            </span>
+                          )}
                         </div>
                         <div className="text-right">
                           <span className="inline-block text-[10px] uppercase tracking-wider font-bold font-mono bg-[#E53E3E]/15 text-[#E53E3E] px-2 py-1 rounded-lg border border-[#E53E3E]/30 shadow-3xs">

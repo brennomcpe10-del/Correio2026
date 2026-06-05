@@ -34,6 +34,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
   const [writingType, setWritingType] = useState<'handwritten' | 'printed'>('handwritten');
   const [isAnonymous, setIsAnonymous] = useState<boolean>(true);
   const [senderName, setSenderName] = useState('');
+  const [readAloud, setReadAloud] = useState<boolean>(false);
   
   const [formError, setFormError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
@@ -132,7 +133,8 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
         isAnonymous,
         senderName,
         validatedProduct,
-        validatedCode
+        validatedCode,
+        readAloud
       );
 
       if (success) {
@@ -508,6 +510,35 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                     />
                   </div>
                 )}
+              </div>
+
+              {/* Pergunta sobre Leitura no Pátio */}
+              <div className="pt-6 border-t border-[#FDF2F2]/10 space-y-3 animate-fade-in" id="read-aloud-section">
+                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">
+                  Som d'Alta Voz (Pátio da Escola)
+                </label>
+                <div 
+                  onClick={() => setReadAloud(prev => !prev)}
+                  className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all select-none ${readAloud ? 'bg-[#E53E3E]/10 border-[#E53E3E]/40 shadow-sm' : 'bg-[#2d040a]/25 border-[#FDF2F2]/10 hover:border-[#E53E3E]/30'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={readAloud}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setReadAloud(e.target.checked);
+                    }}
+                    className="mt-0.5 h-4.5 w-4.5 text-[#E53E3E] bg-[#1f0306] border-[#FDF2F2]/10 rounded focus:ring-0 focus:ring-offset-0 focus:outline-none cursor-pointer"
+                  />
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-[#FDF2F2]">
+                      Você quer que a sua mensagem seja lida lá na frente (no pátio)?
+                    </p>
+                    <p className="text-[10px] text-[#FDF2F2]/60 leading-relaxed">
+                      Marque sim se preferir que seu destinatário seja chamado ao microfone do pátio para ouvir a cartinha! Caso contrário, a entrega será feita de forma totalmente discreta e privada pelos cupidos.
+                    </p>
+                  </div>
+                </div>
               </div>
 
             </div>

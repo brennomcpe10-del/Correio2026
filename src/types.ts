@@ -45,6 +45,7 @@ export interface Letter {
   product: ProductType; // Saved to display product details on message view without attaching code
   createdAt: string;
   status: 'pending' | 'completed'; // "Pendente" | "Concluída"
+  readAloud?: boolean; // Quer que a mensagem seja lida no pátio?
 }
 
 export interface SalesStat {
