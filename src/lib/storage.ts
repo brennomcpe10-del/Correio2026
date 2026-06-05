@@ -259,9 +259,14 @@ export async function generateCode(
       product,
       createdAt: new Date().toISOString(),
       status: 'active',
-      price: price !== undefined ? price : undefined,
-      truffleCount: truffleCount !== undefined ? truffleCount : undefined
     };
+    
+    if (price !== undefined) {
+      newCode.price = price;
+    }
+    if (truffleCount !== undefined) {
+      newCode.truffleCount = truffleCount;
+    }
     
     await setDoc(doc(db, 'codigos_arraial', formattedCode), newCode);
     return formattedCode;
@@ -375,9 +380,14 @@ export async function submitLetter(
         readAloud: !!readAloud,
         ejaSpecification: ejaSpecification || '',
         employeeRole: employeeRole || '',
-        price: codeData.price !== undefined ? codeData.price : undefined,
-        truffleCount: codeData.truffleCount !== undefined ? codeData.truffleCount : undefined,
       };
+      
+      if (codeData.price !== undefined) {
+        newLetter.price = codeData.price;
+      }
+      if (codeData.truffleCount !== undefined) {
+        newLetter.truffleCount = codeData.truffleCount;
+      }
       
       transaction.set(letterRef, newLetter);
       return true;

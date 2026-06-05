@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Lock, LogIn, BarChart3, QrCode, MailOpen, Users2, Copy, Check, 
   Plus, Trash2, Search, Filter, CheckCircle2, ShieldAlert, Undo2, TrendingUp, AlertTriangle,
-  Upload, X, Camera
+  Upload, X, Camera, Unlock
 } from 'lucide-react';
 import { 
   getStats, getAccessCodes, generateCode, getLetters, updateLetterStatus, 
@@ -185,6 +185,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   // Custom alerts or confirm dialogs
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [letterToComplete, setLetterToComplete] = useState<string | null>(null);
+  const [showReleaseModal, setShowReleaseModal] = useState(false);
+  const [releasePassword, setReleasePassword] = useState('');
+  const [releaseError, setReleaseError] = useState('');
 
   // Search & Filters for Letters
   const [searchQuery, setSearchQuery] = useState('');
@@ -261,7 +264,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
     const oldestAddedAt = finalBuffered.length > 0 ? finalBuffered[0].addedAt : null;
     const isBufferFull = finalBuffered.length >= 4;
-    const isTimeReached = oldestAddedAt ? (Date.now() - oldestAddedAt >= 5 * 60 * 1000) : false;
+    const isTimeReached = oldestAddedAt ? (Date.now() - oldestAddedAt >= 20 * 60 * 1000) : false;
 
     if (isBufferFull || isTimeReached) {
       const idsToRelease = finalBuffered.map(b => b.letter.id);
@@ -284,12 +287,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
     return () => clearInterval(timer);
   }, []);
 
-  // Check 5-minute limit dynamically every tick
+  // Check 20-minute limit dynamically every tick
   useEffect(() => {
     if (bufferedLetters.length === 0) return;
     const oldest = bufferedLetters[0];
     const elapsed = Date.now() - oldest.addedAt;
-    if (elapsed >= 5 * 60 * 1000) {
+    if (elapsed >= 20 * 60 * 1000) {
       const idsToRelease = bufferedLetters.map(b => b.letter.id);
       const savedReleased = localStorage.getItem('correio_released_ids');
       const currentReleased = savedReleased ? JSON.parse(savedReleased) as string[] : [];
@@ -304,24 +307,40 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   }, [bufferedLetters, timeTick]);
 
   const handleForceRelease = () => {
-    if (bufferedLetters.length === 0) return;
-    const idsToRelease = bufferedLetters.map(b => b.letter.id);
-    const savedReleased = localStorage.getItem('correio_released_ids');
-    const currentReleased = savedReleased ? JSON.parse(savedReleased) as string[] : [];
-    const finalReleased = [...currentReleased, ...idsToRelease];
-    
-    localStorage.setItem('correio_released_ids', JSON.stringify(finalReleased));
-    localStorage.setItem('correio_buffered_letters', JSON.stringify([]));
-    
-    setReleasedLetterIds(finalReleased);
-    setBufferedLetters([]);
+    setShowReleaseModal(true);
+    setReleasePassword('');
+    setReleaseError('');
+  };
+
+  const handleConfirmRelease = () => {
+    if (releasePassword.trim() !== '4002') {
+      setReleaseError('Senha incorreta! Tente novamente.');
+      return;
+    }
+
+    if (bufferedLetters.length > 0) {
+      const idsToRelease = bufferedLetters.map(b => b.letter.id);
+      const savedReleased = localStorage.getItem('correio_released_ids');
+      const currentReleased = savedReleased ? JSON.parse(savedReleased) as string[] : [];
+      const finalReleased = [...currentReleased, ...idsToRelease];
+      
+      localStorage.setItem('correio_released_ids', JSON.stringify(finalReleased));
+      localStorage.setItem('correio_buffered_letters', JSON.stringify([]));
+      
+      setReleasedLetterIds(finalReleased);
+      setBufferedLetters([]);
+    }
+
+    setShowReleaseModal(false);
+    setReleasePassword('');
+    setReleaseError('');
   };
 
   const getFormattedTimeRemaining = () => {
     if (bufferedLetters.length === 0) return '00:00';
     const firstAdded = bufferedLetters[0].addedAt;
     const elapsed = Date.now() - firstAdded;
-    const remaining = Math.max(0, 5 * 60 * 1000 - elapsed);
+    const remaining = Math.max(0, 20 * 60 * 1000 - elapsed);
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -840,7 +859,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                 <div>
                   <h4 className="text-sm font-bold text-rose-300">Fila de Espera Ativa ({bufferedLetters.length}/4)</h4>
                   <p className="text-xs text-[#FDF2F2]/70 mt-0.5 max-w-xl">
-                    Novas cartas ficam retidas na fila. Elas aparecerão automaticamente juntas assim que o lote atingir 4 cartas ou após 5 minutos do primeiro recebimento.
+                    Novas cartas ficam retidas na fila. Elas aparecerão automaticamente juntas assim que o lote atingir 4 cartas ou após 20 minutos do primeiro recebimento.
                   </p>
                 </div>
               </div>
@@ -1036,6 +1055,62 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                     className="flex-1 py-2.5 rounded-xl text-white font-bold text-xs bg-emerald-600 hover:bg-emerald-700 transition-colors cursor-pointer"
                   >
                     Sim, Escrita!
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PASSWORD RELEASE MODAL */}
+          {showReleaseModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-all" id="release-modal-box">
+              <div className="bg-[#1f0306] rounded-2xl w-full max-w-sm p-6 overflow-hidden shadow-2xl border border-[#FDF2F2]/10 text-center space-y-4">
+                <div className="h-12 w-12 bg-[#E53E3E]/10 border border-[#E53E3E]/35 text-[#E53E3E] rounded-full flex items-center justify-center mx-auto">
+                  <Unlock className="h-6 w-6" />
+                </div>
+                <h4 className="font-serif font-bold text-lg text-[#FDF2F2]/90">Liberação de Lote</h4>
+                <p className="text-xs sm:text-sm text-[#FDF2F2]/60 leading-relaxed">
+                  Digite a senha de liberação para disponibilizar as cartas da fila imediatamente.
+                </p>
+                
+                <div className="space-y-1 text-left">
+                  <input
+                    type="password"
+                    placeholder="Senha de Liberação"
+                    value={releasePassword}
+                    onChange={(e) => {
+                      setReleasePassword(e.target.value);
+                      setReleaseError('');
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-[#FDF2F2]/10 text-center text-sm text-white outline-none bg-[#1f0306] tracking-widest font-mono placeholder:tracking-normal"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleConfirmRelease();
+                      }
+                    }}
+                  />
+                  {releaseError && (
+                    <p className="text-[10px] text-[#E53E3E] text-center font-bold tracking-wide animate-pulse mt-1">{releaseError}</p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowReleaseModal(false);
+                      setReleasePassword('');
+                      setReleaseError('');
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-[#FDF2F2]/80 bg-[#2d040a] hover:bg-[#2d040a]/80 transition-colors border border-[#FDF2F2]/10 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleConfirmRelease}
+                    className="flex-1 py-2.5 rounded-xl text-white font-bold text-xs bg-[#E53E3E] hover:bg-[#c53030] transition-colors cursor-pointer"
+                  >
+                    Liberar Lote
                   </button>
                 </div>
               </div>
