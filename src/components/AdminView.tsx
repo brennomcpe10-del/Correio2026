@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Lock, LogIn, BarChart3, QrCode, MailOpen, Users2, Copy, Check, 
   Plus, Trash2, Search, Filter, CheckCircle2, ShieldAlert, Undo2, TrendingUp, AlertTriangle,
@@ -104,6 +105,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   });
   const [codes, setCodes] = useState<AccessCode[]>([]);
   const [letters, setLetters] = useState<Letter[]>([]);
+
+  // Batch/Buffer system for new letters
+  const [releasedLetterIds, setReleasedLetterIds] = useState<string[]>([]);
+  const [bufferedLetters, setBufferedLetters] = useState<{ letter: Letter; addedAt: number }[]>([]);
+  const [timeTick, setTimeTick] = useState(0);
 
   // Code Gen fields
   const [selectedGeneratorOption, setSelectedGeneratorOption] = useState<string>('Cartinha');
@@ -207,6 +213,118 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
     } catch (err) {
       console.error("Error refreshing data: ", err);
     }
+  };
+
+  // Synchronize new letters with the batch/buffer logic
+  useEffect(() => {
+    if (letters.length === 0) return;
+
+    // 1. Load released IDs
+    const savedReleased = localStorage.getItem('correio_released_ids');
+    let currentReleased = savedReleased ? JSON.parse(savedReleased) as string[] : null;
+
+    // 2. Load buffered letters
+    const savedBuffered = localStorage.getItem('correio_buffered_letters');
+    let currentBuffered = savedBuffered ? JSON.parse(savedBuffered) as { letter: Letter; addedAt: number }[] : [];
+
+    // 3. First time opening the admin view?
+    if (currentReleased === null) {
+      // Treat all currently existing documents as pre-existing and release them immediately
+      const allIds = letters.map(l => l.id);
+      localStorage.setItem('correio_released_ids', JSON.stringify(allIds));
+      setReleasedLetterIds(allIds);
+      setBufferedLetters([]);
+      localStorage.setItem('correio_buffered_letters', JSON.stringify([]));
+      return;
+    }
+
+    // 4. Find new arrivals that are not released and not buffered
+    const newArrivals = letters.filter(letter => 
+      !currentReleased!.includes(letter.id) && 
+      !currentBuffered.some(b => b.letter.id === letter.id)
+    );
+
+    let updatedBuffered = [...currentBuffered];
+    if (newArrivals.length > 0) {
+      newArrivals.forEach(letter => {
+        updatedBuffered.push({
+          letter,
+          addedAt: Date.now()
+        });
+      });
+      localStorage.setItem('correio_buffered_letters', JSON.stringify(updatedBuffered));
+    }
+
+    // 5. Evaluate Release Conditions
+    let finalReleased = [...currentReleased!];
+    let finalBuffered = [...updatedBuffered];
+
+    const oldestAddedAt = finalBuffered.length > 0 ? finalBuffered[0].addedAt : null;
+    const isBufferFull = finalBuffered.length >= 4;
+    const isTimeReached = oldestAddedAt ? (Date.now() - oldestAddedAt >= 5 * 60 * 1000) : false;
+
+    if (isBufferFull || isTimeReached) {
+      const idsToRelease = finalBuffered.map(b => b.letter.id);
+      finalReleased = [...finalReleased, ...idsToRelease];
+      finalBuffered = [];
+      
+      localStorage.setItem('correio_released_ids', JSON.stringify(finalReleased));
+      localStorage.setItem('correio_buffered_letters', JSON.stringify([]));
+    }
+
+    setReleasedLetterIds(finalReleased);
+    setBufferedLetters(finalBuffered);
+  }, [letters]);
+
+  // Periodic ticking for countdown and background release checks
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeTick(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Check 5-minute limit dynamically every tick
+  useEffect(() => {
+    if (bufferedLetters.length === 0) return;
+    const oldest = bufferedLetters[0];
+    const elapsed = Date.now() - oldest.addedAt;
+    if (elapsed >= 5 * 60 * 1000) {
+      const idsToRelease = bufferedLetters.map(b => b.letter.id);
+      const savedReleased = localStorage.getItem('correio_released_ids');
+      const currentReleased = savedReleased ? JSON.parse(savedReleased) as string[] : [];
+      const finalReleased = [...currentReleased, ...idsToRelease];
+      
+      localStorage.setItem('correio_released_ids', JSON.stringify(finalReleased));
+      localStorage.setItem('correio_buffered_letters', JSON.stringify([]));
+      
+      setReleasedLetterIds(finalReleased);
+      setBufferedLetters([]);
+    }
+  }, [bufferedLetters, timeTick]);
+
+  const handleForceRelease = () => {
+    if (bufferedLetters.length === 0) return;
+    const idsToRelease = bufferedLetters.map(b => b.letter.id);
+    const savedReleased = localStorage.getItem('correio_released_ids');
+    const currentReleased = savedReleased ? JSON.parse(savedReleased) as string[] : [];
+    const finalReleased = [...currentReleased, ...idsToRelease];
+    
+    localStorage.setItem('correio_released_ids', JSON.stringify(finalReleased));
+    localStorage.setItem('correio_buffered_letters', JSON.stringify([]));
+    
+    setReleasedLetterIds(finalReleased);
+    setBufferedLetters([]);
+  };
+
+  const getFormattedTimeRemaining = () => {
+    if (bufferedLetters.length === 0) return '00:00';
+    const firstAdded = bufferedLetters[0].addedAt;
+    const elapsed = Date.now() - firstAdded;
+    const remaining = Math.max(0, 5 * 60 * 1000 - elapsed);
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -323,6 +441,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
   // Filter letters dynamically
   const filteredLetters = letters.filter(letter => {
+    // Only display letters that have been released in the current system context
+    const isReleased = releasedLetterIds.includes(letter.id);
+    if (!isReleased) return false;
+
     const matchesSearch = letter.recipient.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           letter.message.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesClass = classFilter ? letter.recipientClass.toLowerCase().includes(classFilter.toLowerCase()) : true;
@@ -686,23 +808,57 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
             </div>
 
             {/* inbox switches pending/concluded */}
-            <div className="flex bg-[#2d040a]/40 p-1.5 rounded-xl border border-[#FDF2F2]/10">
+            <div className="flex bg-[#2d040a]/40 p-1.5 rounded-xl border border-[#FDF2F2]/10 items-center gap-2">
+              {bufferedLetters.length > 0 && (
+                <span className="flex h-2.5 w-2.5 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                </span>
+              )}
               <button
                 id="tab-btn-pending-letters"
                 onClick={() => setLetterStatusTab('pending')}
                 className={`px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${letterStatusTab === 'pending' ? 'bg-[#E53E3E] text-white shadow-xs' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
               >
-                📥 Pendentes ({letters.filter(l => l.status === 'pending').length})
+                📥 Pendentes ({letters.filter(l => l.status === 'pending' && releasedLetterIds.includes(l.id)).length})
               </button>
               
               <button
                 onClick={() => setLetterStatusTab('completed')}
                 className={`px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${letterStatusTab === 'completed' ? 'bg-[#E53E3E] text-white shadow-xs' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
               >
-                📦 Concluídas ({letters.filter(l => l.status === 'completed').length})
+                📦 Concluídas ({letters.filter(l => l.status === 'completed' && releasedLetterIds.includes(l.id)).length})
               </button>
             </div>
           </div>
+
+          {/* Fila de Espera (Buffer) Details Box */}
+          {bufferedLetters.length > 0 && (
+            <div className="bg-[#E53E3E]/10 border border-[#E53E3E]/30 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl animate-pulse">⏳</span>
+                <div>
+                  <h4 className="text-sm font-bold text-rose-300">Fila de Espera Ativa ({bufferedLetters.length}/4)</h4>
+                  <p className="text-xs text-[#FDF2F2]/70 mt-0.5 max-w-xl">
+                    Novas cartas ficam retidas na fila. Elas aparecerão automaticamente juntas assim que o lote atingir 4 cartas ou após 5 minutos do primeiro recebimento.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="bg-[#1f0306] px-3.5 py-1.5 rounded-lg border border-[#FDF2F2]/10 text-xs font-mono text-[#FDF2F2]/95" style={{ minWidth: '150px' }}>
+                  ⏳ Autoliberação: <strong className="text-rose-450 font-bold">{getFormattedTimeRemaining()}</strong>
+                </div>
+                <button
+                  onClick={handleForceRelease}
+                  className="px-4 py-2 rounded-lg bg-[#E53E3E] hover:bg-[#c53030] text-white text-xs font-bold uppercase transition-all duration-200 shadow-sm whitespace-nowrap cursor-pointer flex items-center justify-center"
+                  style={{ minHeight: '44px' }}
+                >
+                  🚀 Forçar Liberação do Lote
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Filters tools grids */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#2d040a]/20 p-4 rounded-xl border border-[#FDF2F2]/5">
@@ -765,74 +921,91 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredLetters.map(letter => {
-                const icon = PRODUCTS.find(p => p.type === letter.product)?.icon || '❤️';
-                return (
-                  <div 
-                    key={letter.id}
-                    className="p-5 rounded-2xl bg-[#2d040a]/20 border border-[#FDF2F2]/10 hover:border-[#E53E3E]/20 transition-all flex flex-col justify-between space-y-4 shadow-sm"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2 border-b border-[#FDF2F2]/10 pb-2">
-                        <div>
-                          <span className="text-[10px] font-bold text-[#FDF2F2]/40 uppercase tracking-wider block">Destinatário:</span>
-                          <h4 className="font-sans font-bold text-[#FDF2F2] hover:text-[#E53E3E] text-sm sm:text-base leading-none">{letter.recipient}</h4>
-                          <span className="text-[10px] font-sans font-semibold text-[#FDF2F2]/80 bg-[#E53E3E]/10 px-1.5 py-0.5 rounded inline-block mt-2 border border-[#E53E3E]/20">
-                            👤 {letter.recipientClass === 'EJA' && letter.ejaSpecification
-                              ? `EJA (${letter.ejaSpecification})`
-                              : letter.recipientClass === 'Professores/Funcionários' && letter.employeeRole
-                              ? `Professores/Funcionários (${letter.employeeRole})`
-                              : letter.recipientClass}
+              <AnimatePresence mode="popLayout">
+                {filteredLetters.map(letter => {
+                  const icon = PRODUCTS.find(p => p.type === letter.product)?.icon || '❤️';
+                  return (
+                    <motion.div 
+                      key={letter.id}
+                      initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                      transition={{ 
+                        type: "spring",
+                        stiffness: 100,
+                        damping: 15,
+                        mass: 0.8
+                      }}
+                      className="p-5 rounded-2xl bg-[#2d040a]/20 border border-[#FDF2F2]/10 hover:border-[#E53E3E]/20 transition-all flex flex-col justify-between space-y-4 shadow-sm"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2 border-b border-[#FDF2F2]/10 pb-2">
+                          <div>
+                            <span className="text-[10px] font-bold text-[#FDF2F2]/40 uppercase tracking-wider block">Destinatário:</span>
+                            <h4 className="font-sans font-bold text-[#FDF2F2] hover:text-[#E53E3E] text-sm sm:text-base leading-none">{letter.recipient}</h4>
+                            <span className="text-[10px] font-sans font-semibold text-[#FDF2F2]/80 bg-[#E53E3E]/10 px-1.5 py-0.5 rounded inline-block mt-2 border border-[#E53E3E]/20">
+                              👤 {letter.recipientClass === 'EJA' && letter.ejaSpecification
+                                ? `EJA (${letter.ejaSpecification})`
+                                : letter.recipientClass === 'Professores/Funcionários' && letter.employeeRole
+                                ? `Professores/Funcionários (${letter.employeeRole})`
+                                : letter.recipientClass}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="inline-block text-[10px] uppercase tracking-wider font-bold font-mono bg-[#E53E3E]/15 text-[#E53E3E] px-2 py-1 rounded-lg border border-[#E53E3E]/30 shadow-3xs">
+                              {icon} {letter.product === 'Cartinha + Buquê de Trufas'
+                                ? letter.price === 20 || letter.truffleCount === 10
+                                  ? 'Buquê Médio (10 trufas)'
+                                  : letter.price === 32 || letter.truffleCount === 15
+                                  ? 'Buquê Grande (15 trufas)'
+                                  : 'Buquê Pequeno (5 trufas)'
+                                : letter.product}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#1f0306]/60 border border-[#f3ecd9]/5 p-3.5 rounded-lg min-h-[70px]">
+                          <p className={`text-xs sm:text-sm text-[#FDF2F2]/90 leading-relaxed whitespace-pre-wrap ${letter.writingType === 'handwritten' ? 'font-handwritten text-lg' : 'font-mono'}`}>
+                            {letter.message}
+                          </p>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[10px] sm:text-xs text-[#FDF2F2]/50 pt-1">
+                          <span>Assinado: <strong className="text-[#FDF2F2]/80 font-sans">{letter.signature}</strong></span>
+                          <span className="bg-[#E53E3E]/10 text-[#E53E3E] px-1.5 py-0.5 rounded font-bold uppercase text-[9px] border border-[#E53E3E]/20">
+                            {letter.writingType === 'handwritten' ? '✍️ Escrita' : '🖨️ Impressa'}
                           </span>
                         </div>
-                        <div className="text-right">
-                          <span className="inline-block text-[10px] uppercase tracking-wider font-bold font-mono bg-[#E53E3E]/15 text-[#E53E3E] px-2 py-1 rounded-lg border border-[#E53E3E]/30 shadow-3xs">
-                            {icon} {letter.product}
-                          </span>
-                        </div>
                       </div>
 
-                      <div className="bg-[#1f0306]/60 border border-[#f3ecd9]/5 p-3.5 rounded-lg min-h-[70px]">
-                        <p className={`text-xs sm:text-sm text-[#FDF2F2]/90 leading-relaxed whitespace-pre-wrap ${letter.writingType === 'handwritten' ? 'font-handwritten text-lg' : 'font-mono'}`}>
-                          {letter.message}
-                        </p>
+                      <div className="pt-3 border-t border-[#FDF2F2]/5 flex flex-wrap items-center justify-between gap-3">
+                        <span className="text-[10px] text-[#FDF2F2]/30 font-medium font-mono shrink-0">Postada em: {new Date(letter.createdAt).toLocaleDateString('pt-BR')}</span>
+                        
+                        {letter.status === 'pending' ? (
+                          <button
+                            id={`btn-complete-letter-${letter.id}`}
+                            onClick={() => triggerCompleteConfirmation(letter.id)}
+                            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 shadow-sm active:scale-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer font-sans"
+                            style={{ minHeight: '44px' }}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                            <span>Escrever Carta</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleUndoComplete(letter.id)}
+                            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-[#FDF2F2]/80 hover:bg-[#FDF2F2]/10 border border-[#FDF2F2]/10 font-bold text-xs uppercase tracking-wider active:scale-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer font-sans"
+                            style={{ minHeight: '44px' }}
+                          >
+                            <Undo2 className="h-3.5 w-3.5 shrink-0" />
+                            <span>Desfazer</span>
+                          </button>
+                        )}
                       </div>
-
-                      <div className="flex justify-between items-center text-[10px] sm:text-xs text-[#FDF2F2]/50 pt-1">
-                        <span>Assinado: <strong className="text-[#FDF2F2]/80 font-sans">{letter.signature}</strong></span>
-                        <span className="bg-[#E53E3E]/10 text-[#E53E3E] px-1.5 py-0.5 rounded font-bold uppercase text-[9px] border border-[#E53E3E]/20">
-                          {letter.writingType === 'handwritten' ? '✍️ Escrita' : '🖨️ Impressa'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-[#FDF2F2]/5 flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-[10px] text-[#FDF2F2]/30 font-medium font-mono shrink-0">Postada em: {new Date(letter.createdAt).toLocaleDateString('pt-BR')}</span>
-                      
-                      {letter.status === 'pending' ? (
-                        <button
-                          id={`btn-complete-letter-${letter.id}`}
-                          onClick={() => triggerCompleteConfirmation(letter.id)}
-                          className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 shadow-sm active:scale-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer font-sans"
-                          style={{ minHeight: '44px' }}
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                          <span>Escrever Carta</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleUndoComplete(letter.id)}
-                          className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-[#FDF2F2]/80 hover:bg-[#FDF2F2]/10 border border-[#FDF2F2]/10 font-bold text-xs uppercase tracking-wider active:scale-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer font-sans"
-                          style={{ minHeight: '44px' }}
-                        >
-                          <Undo2 className="h-3.5 w-3.5 shrink-0" />
-                          <span>Desfazer</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
           )}
 

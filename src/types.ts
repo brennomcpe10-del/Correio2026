@@ -50,6 +50,8 @@ export interface Letter {
   readAloud?: boolean; // Quer que a mensagem seja lida no pátio?
   ejaSpecification?: string; // Especificação do EJA (se aplicável)
   employeeRole?: string; // Cargo/função do funcionário (se aplicável)
+  price?: number; // Preço do buquê (ex: 12, 20, 32) se aplicável
+  truffleCount?: number; // Quantidade de trufas (ex: 5, 10, 15) se aplicável
 }
 
 export interface SalesStat {

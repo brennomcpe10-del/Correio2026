@@ -356,6 +356,7 @@ export async function submitLetter(
       }
       
       // Consume it
+      const codeData = codeSnap.data();
       transaction.update(codeRef, { status: 'used' });
       
       // Insert Letter
@@ -374,6 +375,8 @@ export async function submitLetter(
         readAloud: !!readAloud,
         ejaSpecification: ejaSpecification || '',
         employeeRole: employeeRole || '',
+        price: codeData.price !== undefined ? codeData.price : undefined,
+        truffleCount: codeData.truffleCount !== undefined ? codeData.truffleCount : undefined,
       };
       
       transaction.set(letterRef, newLetter);
