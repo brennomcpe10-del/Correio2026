@@ -46,6 +46,14 @@
           "type": "string",
           "enum": ["active", "used"],
           "description": "Current state of the pre-paid code"
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the bouquet or product in R$"
+        },
+        "truffleCount": {
+          "type": "number",
+          "description": "Amount of trufas in the bouquet"
         }
       },
       "required": ["code", "product", "createdAt", "status"]
@@ -105,6 +113,14 @@
         "readAloud": {
           "type": "boolean",
           "description": "Whether the user wants their letter content read aloud in the school patio"
+        },
+        "ejaSpecification": {
+          "type": "string",
+          "description": "Specification text if recipientClass is EJA"
+        },
+        "employeeRole": {
+          "type": "string",
+          "description": "Job/role of the employee if recipientClass is Professors/Funcionários"
         }
       },
       "required": ["id", "recipient", "recipientClass", "message", "signature", "writingType", "isAnonymous", "product", "createdAt", "status"]

@@ -88,11 +88,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
     },
     {
       q: 'Como funciona a entrega das trufas e rosas?',
-      a: 'No dia do evento, a entrega será feita diretamente no pátio da escola. Teremos dois cupidos encarregados de pegar as cartinhas, ler em voz alta o nome de quem recebeu, e a pessoa deverá ir até lá para retirar a sua trufa ou rosa!'
+      a: 'No dia do evento, a entrega será feita diretamente no pátio do colégio. Teremos dois cupidos encarregados de pegar as cartinhas, ler em voz alta o nome de quem recebeu, e a pessoa deverá ir até lá para retirar a sua trufa ou rosa!'
     },
     {
       q: 'Posso enviar para professores ou funcionários?',
-      a: 'Sim, é permitido enviar para professores e funcionários da escola! No entanto, pedimos muito mais cuidado com o conteúdo da mensagem, garantindo que seja estritamente um texto de carinho, respeito ou admiração profissional.'
+      a: 'Sim, é permitido enviar para professores e funcionários do colégio! No entanto, pedimos muito mais cuidado com o conteúdo da mensagem, garantindo que seja estritamente um texto de carinho, respeito ou admiração profissional.'
     },
     {
       q: 'O que acontece se eu digitar o nome de alguém incorretamente?',
@@ -133,7 +133,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
             Correio Elegante <span className="text-[#E53E3E] not-italic">do CECB</span>
           </h1>
           <p className="font-sans text-xs sm:text-base text-[#FDF2F2]/70 max-w-lg mx-auto">
-            O mistério do anonimato aliado à doçura do Arraial. Escolha seu presente e aqueça os corações mais cobiçados da escola. 💖
+            O mistério do anonimato aliado à doçura do Arraial. Escolha seu presente e aqueça os corações mais cobiçados do colégio. 💖
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row justify-center gap-4">

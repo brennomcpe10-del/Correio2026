@@ -25,6 +25,8 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
   // Form fields
   const [recipient, setRecipient] = useState('');
   const [recipientClass, setRecipientClass] = useState('');
+  const [ejaSpecification, setEjaSpecification] = useState('');
+  const [employeeRole, setEmployeeRole] = useState('');
   const [message, setMessage] = useState('');
   
   // Signature preset buttons
@@ -34,7 +36,6 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
   const [writingType, setWritingType] = useState<'handwritten' | 'printed'>('handwritten');
   const [isAnonymous, setIsAnonymous] = useState<boolean>(true);
   const [senderName, setSenderName] = useState('');
-  const [readAloud, setReadAloud] = useState<boolean>(false);
   
   const [formError, setFormError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
@@ -103,7 +104,15 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
       return;
     }
     if (!recipientClass.trim()) {
-      setFormError('Por favor digite qual é a turma/ano do destinatário.');
+      setFormError('Por favor escolha qual é a turma/ano do destinatário.');
+      return;
+    }
+    if (recipientClass === 'EJA' && !ejaSpecification.trim()) {
+      setFormError('Por favor, especifique o EJA (ex: Juvenil II).');
+      return;
+    }
+    if (recipientClass === 'Professores/Funcionários' && !employeeRole.trim()) {
+      setFormError('Por favor, informe o cargo/função (ex: Bibliotecário, Secretário).');
       return;
     }
     if (!message.trim()) {
@@ -134,7 +143,9 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
         senderName,
         validatedProduct,
         validatedCode,
-        readAloud
+        false, // readAloud
+        ejaSpecification,
+        employeeRole
       );
 
       if (success) {
@@ -301,7 +312,12 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                 <select
                   id="recipient-class-input"
                   value={recipientClass}
-                  onChange={(e) => setRecipientClass(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setRecipientClass(val);
+                    if (val !== 'EJA') setEjaSpecification('');
+                    if (val !== 'Professores/Funcionários') setEmployeeRole('');
+                  }}
                   className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/72 shadow-inner outline-none font-sans"
                   required
                 >
@@ -315,8 +331,48 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                   <option value="3°B" className="text-white bg-[#1f0306]">3°B</option>
                   <option value="3°C" className="text-white bg-[#1f0306]">3°C</option>
                   <option value="3°D" className="text-white bg-[#1f0306]">3°D</option>
+                  <option value="EJA" className="text-white bg-[#1f0306]">EJA</option>
+                  <option value="Professores/Funcionários" className="text-white bg-[#1f0306]">Professores/Funcionários</option>
                 </select>
               </div>
+
+              {recipientClass === 'EJA' && (
+                <div className="space-y-1.5 sm:col-span-2 animate-fade-in">
+                  <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Especifique o EJA *</label>
+                  <input
+                    id="eja-spec-input"
+                    type="text"
+                    placeholder="Especifique o EJA (ex: Juvenil II)"
+                    value={ejaSpecification}
+                    onChange={(e) => setEjaSpecification(e.target.value)}
+                    className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/40 shadow-inner outline-none placeholder:text-[#FDF2F2]/25"
+                    required
+                  />
+                </div>
+              )}
+
+              {recipientClass === 'Professores/Funcionários' && (
+                <div className="space-y-3 sm:col-span-2 animate-fade-in">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Informe o cargo/função *</label>
+                    <input
+                      id="employee-role-input"
+                      type="text"
+                      placeholder="Informe o cargo/função (ex: Bibliotecário, Secretário)"
+                      value={employeeRole}
+                      onChange={(e) => setEmployeeRole(e.target.value)}
+                      className="w-full p-3.5 rounded-xl border border-[#FDF2F2]/10 focus:border-[#E53E3E] focus:ring-0 text-sm text-white bg-[#2d040a]/40 shadow-inner outline-none placeholder:text-[#FDF2F2]/25"
+                      required
+                    />
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200 flex items-start gap-2 max-w-2xl">
+                    <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                    <p className="leading-relaxed">
+                      <strong>Atenção:</strong> Mensagens para professores e funcionários devem ser de carinho, admiração e respeito. Mensagens impróprias não serão lidas.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Core Message area */}
@@ -512,34 +568,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                 )}
               </div>
 
-              {/* Pergunta sobre Leitura no Pátio */}
-              <div className="pt-6 border-t border-[#FDF2F2]/10 space-y-3 animate-fade-in" id="read-aloud-section">
-                <label className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">
-                  Som d'Alta Voz (Pátio da Escola)
-                </label>
-                <div 
-                  onClick={() => setReadAloud(prev => !prev)}
-                  className={`flex items-start gap-4 p-4 rounded-xl border cursor-pointer transition-all select-none ${readAloud ? 'bg-[#E53E3E]/10 border-[#E53E3E]/40 shadow-sm' : 'bg-[#2d040a]/25 border-[#FDF2F2]/10 hover:border-[#E53E3E]/30'}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={readAloud}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      setReadAloud(e.target.checked);
-                    }}
-                    className="mt-0.5 h-4.5 w-4.5 text-[#E53E3E] bg-[#1f0306] border-[#FDF2F2]/10 rounded focus:ring-0 focus:ring-offset-0 focus:outline-none cursor-pointer"
-                  />
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold text-[#FDF2F2]">
-                      Você quer que a sua mensagem seja lida lá na frente (no pátio)?
-                    </p>
-                    <p className="text-[10px] text-[#FDF2F2]/60 leading-relaxed">
-                      Marque sim se preferir que seu destinatário seja chamado ao microfone do pátio para ouvir a cartinha! Caso contrário, a entrega será feita de forma totalmente discreta e privada pelos cupidos.
-                    </p>
-                  </div>
-                </div>
-              </div>
+
 
             </div>
 
@@ -592,7 +621,11 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               <div className="flex gap-1.5 items-end">
                 <span className="font-sans text-xs font-bold uppercase tracking-wider text-amber-950/70 font-semibold">TURMA/SALA:</span>
                 <span className="font-sans text-xs sm:text-sm font-semibold text-gray-700 pl-1">
-                  {recipientClass}
+                  {recipientClass === 'EJA' && ejaSpecification
+                    ? `EJA (${ejaSpecification})`
+                    : recipientClass === 'Professores/Funcionários' && employeeRole
+                    ? `Professores/Funcionários (${employeeRole})`
+                    : recipientClass}
                 </span>
               </div>
             </div>
@@ -696,6 +729,8 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
               // Reset state variables
               setRecipient('');
               setRecipientClass('');
+              setEjaSpecification('');
+              setEmployeeRole('');
               setMessage('');
               setSenderName('');
               setIsAnonymous(true);

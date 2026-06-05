@@ -113,7 +113,7 @@ export async function initLocalStorage() {
           id: 'let-3',
           recipient: 'Professora Sandra (Química)',
           recipientClass: 'Sala dos Professores',
-          message: 'Melhor professora da escola inteira! Obrigado pela paciência e por nos inspirar todos os dias. Um carinho enorme de toda nossa turma.',
+          message: 'Melhor professora do colégio inteiro! Obrigado pela paciência e por nos inspirar todos os dias. Um carinho enorme de toda nossa turma.',
           signature: '❤️',
           writingType: 'handwritten',
           isAnonymous: true,
@@ -237,7 +237,11 @@ export async function getAccessCodes(): Promise<AccessCode[]> {
   }
 }
 
-export async function generateCode(product: ProductType): Promise<string> {
+export async function generateCode(
+  product: ProductType,
+  price?: number,
+  truffleCount?: number
+): Promise<string> {
   try {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid confusing letters like O/I/0/1
     const genChunk = (len: number) => {
@@ -254,7 +258,9 @@ export async function generateCode(product: ProductType): Promise<string> {
       code: formattedCode,
       product,
       createdAt: new Date().toISOString(),
-      status: 'active'
+      status: 'active',
+      price: price !== undefined ? price : undefined,
+      truffleCount: truffleCount !== undefined ? truffleCount : undefined
     };
     
     await setDoc(doc(db, 'codigos_arraial', formattedCode), newCode);
@@ -333,7 +339,9 @@ export async function submitLetter(
   senderName: string,
   productType: ProductType,
   codeString: string,
-  readAloud?: boolean
+  readAloud?: boolean,
+  ejaSpecification?: string,
+  employeeRole?: string
 ): Promise<boolean> {
   const cleanCode = codeString.toUpperCase().trim();
   const codeRef = doc(db, 'codigos_arraial', cleanCode);
@@ -364,6 +372,8 @@ export async function submitLetter(
         createdAt: new Date().toISOString(),
         status: 'pending',
         readAloud: !!readAloud,
+        ejaSpecification: ejaSpecification || '',
+        employeeRole: employeeRole || '',
       };
       
       transaction.set(letterRef, newLetter);
@@ -421,7 +431,8 @@ export async function getStats(): Promise<{
       const prodConfig = PRODUCTS.find(p => p.type === c.product);
       if (prodConfig && c.status === 'used') {
         productSummary[c.product].count += 1;
-        productSummary[c.product].revenue += prodConfig.price;
+        const actualPrice = (c.price !== undefined && c.price !== null) ? c.price : prodConfig.price;
+        productSummary[c.product].revenue += actualPrice;
       }
     });
 

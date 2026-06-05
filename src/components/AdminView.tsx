@@ -106,7 +106,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   const [letters, setLetters] = useState<Letter[]>([]);
 
   // Code Gen fields
-  const [selectedProduct, setSelectedProduct] = useState<ProductType>('Cartinha');
+  const [selectedGeneratorOption, setSelectedGeneratorOption] = useState<string>('Cartinha');
   const [justGeneratedCode, setJustGeneratedCode] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
@@ -241,7 +241,34 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
   // Generate a code
   const handleGenerateCode = async () => {
-    const code = await generateCode(selectedProduct);
+    let productType: ProductType = 'Cartinha';
+    let price: number | undefined = undefined;
+    let truffleCount: number | undefined = undefined;
+
+    if (selectedGeneratorOption === 'bouquet_pequeno') {
+      productType = 'Cartinha + Buquê de Trufas';
+      price = 12;
+      truffleCount = 5;
+    } else if (selectedGeneratorOption === 'bouquet_medio') {
+      productType = 'Cartinha + Buquê de Trufas';
+      price = 20;
+      truffleCount = 10;
+    } else if (selectedGeneratorOption === 'bouquet_grande') {
+      productType = 'Cartinha + Buquê de Trufas';
+      price = 32;
+      truffleCount = 15;
+    } else {
+      productType = selectedGeneratorOption as ProductType;
+      const prodConfig = PRODUCTS.find(p => p.type === productType);
+      if (prodConfig) {
+        price = prodConfig.price;
+        if (productType === 'Cartinha + Trufa' || productType === 'Cartinha + Trufa + Rosa') {
+          truffleCount = 1;
+        }
+      }
+    }
+    
+    const code = await generateCode(productType, price, truffleCount);
     setJustGeneratedCode(code);
     await refreshAllData();
   };
@@ -371,6 +398,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
   // Calculate stats values
   const totalRevenue = stats.productSummary.reduce((acc, curr) => acc + curr.revenue, 0);
+
+  const getGeneratorOptionLabel = (option: string) => {
+    switch (option) {
+      case 'bouquet_pequeno': return 'Buquê Pequeno (R$ 12)';
+      case 'bouquet_medio': return 'Buquê Médio (R$ 20)';
+      case 'bouquet_grande': return 'Buquê Grande (R$ 32)';
+      default: return option;
+    }
+  };
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 text-[#FDF2F2]" id="admin-dashboard-container">
@@ -524,31 +560,33 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
               </div>
             </div>
 
-            {/* Code Generator Panel */}
+            {/* Selected Bouquet Code Generator Panel */}
             <div className="lg:col-span-2 bg-[#1f0306]/85 border border-[#FDF2F2]/10 rounded-2xl p-6 shadow-2xl space-y-6" id="code-generator-section">
               <div>
                 <h3 className="font-serif font-bold text-lg italic text-[#FDF2F2] mb-1 flex items-center gap-1.5">
-                  <QrCode className="h-5 w-5 text-[#E53E3E]" /> Gerador de Código do Arraial
+                  <QrCode className="h-5 w-5 text-[#E53E3E]" /> Gerador de Código de Venda
                 </h3>
                 <p className="text-xs text-[#FDF2F2]/60 leading-relaxed">
-                  Gere um código único para o aluno assim que ele efetuar o pagamento via Pix ou dinheiro presencialmente.
+                  Selecione o combo ou tipo de buquê vendido e gere o código correspondente para o comprador.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end bg-[#2d040a]/20 p-4 rounded-2xl border border-[#FDF2F2]/5">
                 <div className="space-y-1.5">
-                  <span className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Qual combo foi comprado?</span>
+                  <span className="block text-xs font-semibold tracking-wider text-[#FDF2F2]/80 uppercase">Item vendido:</span>
                   <select
                     id="combo-select-generator"
-                    value={selectedProduct}
-                    onChange={(e) => setSelectedProduct(e.target.value as ProductType)}
+                    value={selectedGeneratorOption}
+                    onChange={(e) => setSelectedGeneratorOption(e.target.value)}
                     className="w-full p-2.5 rounded-xl border border-[#FDF2F2]/10 text-xs sm:text-sm text-white outline-none bg-[#1f0306]"
                   >
-                    {PRODUCTS.map(p => (
-                      <option key={p.type} value={p.type}>
-                        {p.icon} {p.type} | R$ {p.price.toFixed(2)}
-                      </option>
-                    ))}
+                    <option value="Cartinha" className="text-white bg-[#1f0306]">❤️ Cartinha - R$ 2,00</option>
+                    <option value="Cartinha + Trufa" className="text-white bg-[#1f0306]">🍫 Cartinha + Trufa - R$ 3,00</option>
+                    <option value="Cartinha + Rosa" className="text-white bg-[#1f0306]">🌹 Cartinha + Rosa - R$ 5,00</option>
+                    <option value="Cartinha + Trufa + Rosa" className="text-white bg-[#1f0306]">🌹🍫 Cartinha + Trufa + Rosa - R$ 7,00</option>
+                    <option value="bouquet_pequeno" className="text-white bg-[#1f0306]">💐 Buquê Pequeno (5 trufas) - R$ 12,00</option>
+                    <option value="bouquet_medio" className="text-white bg-[#1f0306]">💐 Buquê Médio (10 trufas) - R$ 20,00</option>
+                    <option value="bouquet_grande" className="text-white bg-[#1f0306]">💐 Buquê Grande (15 trufas) - R$ 32,00</option>
                   </select>
                 </div>
 
@@ -567,7 +605,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">🎉</span>
                     <div>
-                      <span className="block text-[8px] font-bold text-[#E53E3E] uppercase tracking-widest leading-none">Código Gerado: [{selectedProduct}]</span>
+                      <span className="block text-[8px] font-bold text-[#E53E3E] uppercase tracking-widest leading-none">
+                        Código Gerado: [{getGeneratorOptionLabel(selectedGeneratorOption)}]
+                      </span>
                       <span className="font-mono font-black text-base sm:text-lg text-white tracking-wider font-extrabold">{justGeneratedCode}</span>
                     </div>
                   </div>
@@ -602,7 +642,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                       <div key={c.code} className="p-3 flex items-center justify-between text-xs hover:bg-[#2d040a]/30 transition-colors">
                         <div className="space-y-1">
                           <span className="font-mono font-bold text-[#FDF2F2] text-sm tracking-wide bg-[#2d040a] px-2.5 py-1 rounded border border-[#FDF2F2]/10">{c.code}</span>
-                          <span className="block font-sans font-medium text-[#FDF2F2]/60 max-w-[150px] sm:max-w-none truncate">{c.product}</span>
+                          <span className="block font-sans font-medium text-[#FDF2F2]/60 max-w-[153px] sm:max-w-none truncate">
+                            {c.product === 'Cartinha + Buquê de Trufas'
+                              ? c.price === 20 || c.truffleCount === 10
+                                ? '💐 Buquê Médio (10 trufas) - R$ 20,00'
+                                : c.price === 32 || c.truffleCount === 15
+                                ? '💐 Buquê Grande (15 trufas) - R$ 32,00'
+                                : '💐 Buquê Pequeno (5 trufas) - R$ 12,00'
+                              : c.product}
+                          </span>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${c.status === 'active' ? 'bg-emerald-950/20 text-emerald-400 border border-emerald-500/20' : 'bg-[#2d040a] text-[#FDF2F2]/40'}`}>
@@ -730,17 +778,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                           <span className="text-[10px] font-bold text-[#FDF2F2]/40 uppercase tracking-wider block">Destinatário:</span>
                           <h4 className="font-sans font-bold text-[#FDF2F2] hover:text-[#E53E3E] text-sm sm:text-base leading-none">{letter.recipient}</h4>
                           <span className="text-[10px] font-sans font-semibold text-[#FDF2F2]/80 bg-[#E53E3E]/10 px-1.5 py-0.5 rounded inline-block mt-2 border border-[#E53E3E]/20">
-                            👤 {letter.recipientClass}
+                            👤 {letter.recipientClass === 'EJA' && letter.ejaSpecification
+                              ? `EJA (${letter.ejaSpecification})`
+                              : letter.recipientClass === 'Professores/Funcionários' && letter.employeeRole
+                              ? `Professores/Funcionários (${letter.employeeRole})`
+                              : letter.recipientClass}
                           </span>
-                          {letter.readAloud ? (
-                            <span className="text-[10px] font-sans font-bold text-white bg-green-700/80 px-1.5 py-0.5 rounded inline-block mt-2 border border-green-500/30 ml-1.5 animate-pulse">
-                              📢 LER NO PÁTIO
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-sans font-medium text-[#FDF2F2]/50 bg-zinc-800/60 px-1.5 py-0.5 rounded inline-block mt-2 border border-zinc-700/30 ml-1.5">
-                              🔕 Entrega Privada/Silenciosa
-                            </span>
-                          )}
                         </div>
                         <div className="text-right">
                           <span className="inline-block text-[10px] uppercase tracking-wider font-bold font-mono bg-[#E53E3E]/15 text-[#E53E3E] px-2 py-1 rounded-lg border border-[#E53E3E]/30 shadow-3xs">

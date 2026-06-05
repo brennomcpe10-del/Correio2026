@@ -30,6 +30,8 @@ export interface AccessCode {
   product: ProductType;
   createdAt: string;
   status: 'active' | 'used';
+  price?: number; // Preço do buquê (ex: 12, 20, 32) ou outros produtos
+  truffleCount?: number; // Quantidade de trufas (ex: 5, 10, 15)
 }
 
 export interface Letter {
@@ -46,6 +48,8 @@ export interface Letter {
   createdAt: string;
   status: 'pending' | 'completed'; // "Pendente" | "Concluída"
   readAloud?: boolean; // Quer que a mensagem seja lida no pátio?
+  ejaSpecification?: string; // Especificação do EJA (se aplicável)
+  employeeRole?: string; // Cargo/função do funcionário (se aplicável)
 }
 
 export interface SalesStat {
