@@ -858,16 +858,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                 <span className="text-2xl animate-pulse">⏳</span>
                 <div>
                   <h4 className="text-sm font-bold text-rose-300">Fila de Espera Ativa ({bufferedLetters.length}/4)</h4>
-                  <p className="text-xs text-[#FDF2F2]/70 mt-0.5 max-w-xl">
-                    Novas cartas ficam retidas na fila. Elas aparecerão automaticamente juntas assim que o lote atingir 4 cartas ou após 20 minutos do primeiro recebimento.
-                  </p>
                 </div>
               </div>
               
               <div className="flex flex-wrap items-center gap-3">
-                <div className="bg-[#1f0306] px-3.5 py-1.5 rounded-lg border border-[#FDF2F2]/10 text-xs font-mono text-[#FDF2F2]/95" style={{ minWidth: '150px' }}>
-                  ⏳ Autoliberação: <strong className="text-rose-450 font-bold">{getFormattedTimeRemaining()}</strong>
-                </div>
                 <button
                   onClick={handleForceRelease}
                   className="px-4 py-2 rounded-lg bg-[#E53E3E] hover:bg-[#c53030] text-white text-xs font-bold uppercase transition-all duration-200 shadow-sm whitespace-nowrap cursor-pointer flex items-center justify-center"
