@@ -15,14 +15,22 @@ export type ProductType =
   | 'Cartinha + Trufa'
   | 'Cartinha + Rosa'
   | 'Cartinha + Trufa + Rosa'
-  | 'Cartinha + Buquê de Trufas';
+  | 'Cartinha + Buquê de Trufas'
+  | 'Cartinha + 1 Bis'
+  | 'Cartinha + Flor'
+  | 'Cartinha + Flor + 2 Bis'
+  | 'Buquê Pequeno (10 Bis)'
+  | 'Buquê Médio (15 Bis)'
+  | 'Buquê Grande (20 Bis)';
 
 export const PRODUCTS: { type: ProductType; price: number; icon: string }[] = [
   { type: 'Cartinha', price: 2.00, icon: '❤️' },
-  { type: 'Cartinha + Trufa', price: 3.00, icon: '🍫' },
-  { type: 'Cartinha + Rosa', price: 5.00, icon: '🌹' },
-  { type: 'Cartinha + Trufa + Rosa', price: 7.00, icon: '🌹🍫' },
-  { type: 'Cartinha + Buquê de Trufas', price: 12.00, icon: '💐' },
+  { type: 'Cartinha + 1 Bis', price: 3.00, icon: '🍫' },
+  { type: 'Cartinha + Flor', price: 5.00, icon: '🌹' },
+  { type: 'Cartinha + Flor + 2 Bis', price: 7.00, icon: '🌹🍫' },
+  { type: 'Buquê Pequeno (10 Bis)', price: 12.00, icon: '💐' },
+  { type: 'Buquê Médio (15 Bis)', price: 17.00, icon: '💐' },
+  { type: 'Buquê Grande (20 Bis)', price: 22.00, icon: '💐' },
 ];
 
 export interface AccessCode {

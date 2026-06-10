@@ -10,11 +10,12 @@ import { SendLetterView } from './components/SendLetterView';
 import { AdminView } from './components/AdminView';
 import { getResponsibles, initLocalStorage, forceRecreateEmptyCollections } from './lib/storage';
 import { Responsible } from './types';
-import { Sparkles, Heart } from 'lucide-react';
+import { Sparkles, Heart, X } from 'lucide-react';
 
 export default function App() {
   const [currentView, setView] = useState<'home' | 'send' | 'admin'>('home');
   const [responsibles, setResponsibles] = useState<Responsible[]>([]);
+  const [showBanner, setShowBanner] = useState(false);
 
   // Initialize and load dynamic responsibles
   useEffect(() => {
@@ -25,6 +26,11 @@ export default function App() {
       setResponsibles(res);
     };
     loadData();
+
+    // Slide down notification banner gently after a short delay
+    const bannerTimer = setTimeout(() => {
+      setShowBanner(true);
+    }, 600);
     
     // Whimsical background aesthetic: generate gentle floating hearts on mount
     const heartContainer = document.createElement('div');
@@ -65,6 +71,7 @@ export default function App() {
     return () => {
       clearInterval(interval);
       heartContainer.remove();
+      clearTimeout(bannerTimer);
     };
   }, []);
 
@@ -85,6 +92,43 @@ export default function App() {
       <div>
         {/* Navigation Bar Header */}
         <Header currentView={currentView} setView={setView} />
+
+        {/* Global Transition Announcement Banner - Slides down like a toast notification */}
+        <div 
+          className="fixed left-1/2 z-50 w-full max-w-xl px-4 transition-all duration-700 ease-out" 
+          style={{ 
+            top: '1.25rem',
+            transform: `translate(-50%, ${showBanner ? '0' : '-200%'})`,
+            opacity: showBanner ? 1 : 0, 
+            pointerEvents: showBanner ? 'auto' : 'none' 
+          }}
+          id="transition-warning-banner"
+        >
+          <div className="bg-[#1f0306]/95 border-2 border-[#E53E3E]/60 rounded-2xl p-4 flex items-start gap-3 shadow-2xl relative overflow-hidden backdrop-blur-md">
+            {/* Elegant luxury indicator line on the left */}
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-yellow-500 via-[#E53E3E] to-pink-600"></div>
+            
+            <span className="text-xl sm:text-2xl pt-0.5 shrink-0 animate-pulse">⚠️</span>
+            <div className="flex-grow pr-6">
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-yellow-400 mb-1 tracking-wide uppercase">
+                AVISO: Preços Repaginados!
+              </h4>
+              <p className="text-xs text-[#FDF2F2]/90 leading-relaxed font-sans font-medium">
+                Informamos que todos os pedidos de trufas feitos até o dia 10 de junho serão entregues normalmente. A partir desta data, 10 de junho, todos os mimos serão substituídos por deliciosos Bis.
+              </p>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={() => setShowBanner(false)}
+              className="absolute top-3 right-3 text-[#FDF2F2]/40 hover:text-[#FDF2F2]/90 hover:bg-[#FDF2F2]/10 p-1 rounded-full transition-all duration-200 cursor-pointer"
+              title="Fechar aviso"
+              id="close-warning-banner-btn"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
 
         {/* Content Viewer viewport */}
         <main className="relative z-10">

@@ -15,11 +15,11 @@ service cloud.firestore {
         && (!('senderName' in data.keys()) || data.senderName is string)
         && data.recipient is string && data.recipient.size() > 0 && data.recipient.size() <= 150
         && data.recipientClass is string && data.recipientClass.size() > 0 && data.recipientClass.size() <= 150
-        && data.message is string && data.message.size() > 0 && data.message.size() <= 500
+        && data.message is string && data.message.size() > 0 && data.message.size() <= 1000
         && data.signature is string && data.signature.size() > 0 && data.signature.size() <= 100
         && data.writingType in ['handwritten', 'printed']
         && data.isAnonymous is bool
-        && data.product in ['Cartinha', 'Cartinha + Trufa', 'Cartinha + Rosa', 'Cartinha + Trufa + Rosa', 'Cartinha + Buquê de Trufas']
+        && data.product in ['Cartinha', 'Cartinha + Trufa', 'Cartinha + Rosa', 'Cartinha + Trufa + Rosa', 'Cartinha + Buquê de Trufas', 'Cartinha + 1 Bis', 'Cartinha + Flor', 'Cartinha + Flor + 2 Bis', 'Buquê Pequeno (10 Bis)', 'Buquê Médio (15 Bis)', 'Buquê Grande (20 Bis)']
         && data.createdAt is string
         && data.status in ['pending', 'completed'];
     }
@@ -27,7 +27,7 @@ service cloud.firestore {
     function isValidAccessCode(data) {
       return data.keys().hasAll(['code', 'product', 'createdAt', 'status'])
         && data.code is string && data.code.size() > 0
-        && data.product in ['Cartinha', 'Cartinha + Trufa', 'Cartinha + Rosa', 'Cartinha + Trufa + Rosa', 'Cartinha + Buquê de Trufas']
+        && data.product in ['Cartinha', 'Cartinha + Trufa', 'Cartinha + Rosa', 'Cartinha + Trufa + Rosa', 'Cartinha + Buquê de Trufas', 'Cartinha + 1 Bis', 'Cartinha + Flor', 'Cartinha + Flor + 2 Bis', 'Buquê Pequeno (10 Bis)', 'Buquê Médio (15 Bis)', 'Buquê Grande (20 Bis)']
         && data.createdAt is string
         && data.status in ['active', 'used'];
     }

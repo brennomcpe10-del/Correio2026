@@ -378,31 +378,42 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
 
   // Generate a code
   const handleGenerateCode = async () => {
-    let productType: ProductType = 'Cartinha';
+    let productType: ProductType = selectedGeneratorOption as ProductType;
     let price: number | undefined = undefined;
     let truffleCount: number | undefined = undefined;
 
-    if (selectedGeneratorOption === 'bouquet_pequeno') {
+    const prodConfig = PRODUCTS.find(p => p.type === productType);
+    if (prodConfig) {
+      price = prodConfig.price;
+    }
+
+    if (productType === 'Cartinha + 1 Bis') {
+      truffleCount = 1;
+    } else if (productType === 'Cartinha + Flor + 2 Bis') {
+      truffleCount = 2;
+    } else if (productType === 'Buquê Pequeno (10 Bis)') {
+      truffleCount = 10;
+    } else if (productType === 'Buquê Médio (15 Bis)') {
+      truffleCount = 15;
+    } else if (productType === 'Buquê Grande (20 Bis)') {
+      truffleCount = 20;
+    } else if (productType === 'Cartinha + Trufa' || productType === 'Cartinha + Trufa + Rosa') {
+      truffleCount = 1; // legacy
+    } else if (selectedGeneratorOption === 'bouquet_pequeno') {
+      // legacy support
       productType = 'Cartinha + Buquê de Trufas';
       price = 12;
       truffleCount = 5;
     } else if (selectedGeneratorOption === 'bouquet_medio') {
+      // legacy support
       productType = 'Cartinha + Buquê de Trufas';
       price = 20;
       truffleCount = 10;
     } else if (selectedGeneratorOption === 'bouquet_grande') {
+      // legacy support
       productType = 'Cartinha + Buquê de Trufas';
       price = 32;
       truffleCount = 15;
-    } else {
-      productType = selectedGeneratorOption as ProductType;
-      const prodConfig = PRODUCTS.find(p => p.type === productType);
-      if (prodConfig) {
-        price = prodConfig.price;
-        if (productType === 'Cartinha + Trufa' || productType === 'Cartinha + Trufa + Rosa') {
-          truffleCount = 1;
-        }
-      }
     }
     
     const code = await generateCode(productType, price, truffleCount);
@@ -722,12 +733,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                     className="w-full p-2.5 rounded-xl border border-[#FDF2F2]/10 text-xs sm:text-sm text-white outline-none bg-[#1f0306]"
                   >
                     <option value="Cartinha" className="text-white bg-[#1f0306]">❤️ Cartinha - R$ 2,00</option>
-                    <option value="Cartinha + Trufa" className="text-white bg-[#1f0306]">🍫 Cartinha + Trufa - R$ 3,00</option>
-                    <option value="Cartinha + Rosa" className="text-white bg-[#1f0306]">🌹 Cartinha + Rosa - R$ 5,00</option>
-                    <option value="Cartinha + Trufa + Rosa" className="text-white bg-[#1f0306]">🌹🍫 Cartinha + Trufa + Rosa - R$ 7,00</option>
-                    <option value="bouquet_pequeno" className="text-white bg-[#1f0306]">💐 Buquê Pequeno (5 trufas) - R$ 12,00</option>
-                    <option value="bouquet_medio" className="text-white bg-[#1f0306]">💐 Buquê Médio (10 trufas) - R$ 20,00</option>
-                    <option value="bouquet_grande" className="text-white bg-[#1f0306]">💐 Buquê Grande (15 trufas) - R$ 32,00</option>
+                    <option value="Cartinha + 1 Bis" className="text-white bg-[#1f0306]">🍫 Cartinha + 1 Bis - R$ 3,00</option>
+                    <option value="Cartinha + Flor" className="text-white bg-[#1f0306]">🌹 Cartinha + Flor - R$ 5,00</option>
+                    <option value="Cartinha + Flor + 2 Bis" className="text-white bg-[#1f0306]">🌹🍫 Cartinha + Flor + 2 Bis - R$ 7,00</option>
+                    <option value="Buquê Pequeno (10 Bis)" className="text-white bg-[#1f0306]">💐 Buquê Pequeno (10 Bis) - R$ 12,00</option>
+                    <option value="Buquê Médio (15 Bis)" className="text-white bg-[#1f0306]">💐 Buquê Médio (15 Bis) - R$ 17,00</option>
+                    <option value="Buquê Grande (20 Bis)" className="text-white bg-[#1f0306]">💐 Buquê Grande (20 Bis) - R$ 22,00</option>
                   </select>
                 </div>
 
@@ -790,6 +801,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                                 : c.price === 32 || c.truffleCount === 15
                                 ? '💐 Buquê Grande (15 trufas) - R$ 32,00'
                                 : '💐 Buquê Pequeno (5 trufas) - R$ 12,00'
+                              : PRODUCTS.find(p => p.type === c.product)
+                              ? `${PRODUCTS.find(p => p.type === c.product)?.icon} ${c.product} - R$ ${PRODUCTS.find(p => p.type === c.product)?.price.toFixed(2).replace('.', ',')}`
                               : c.product}
                           </span>
                         </div>

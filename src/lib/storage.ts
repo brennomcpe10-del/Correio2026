@@ -436,6 +436,12 @@ export async function getStats(): Promise<{
       'Cartinha + Rosa': { count: 0, revenue: 0 },
       'Cartinha + Trufa + Rosa': { count: 0, revenue: 0 },
       'Cartinha + Buquê de Trufas': { count: 0, revenue: 0 },
+      'Cartinha + 1 Bis': { count: 0, revenue: 0 },
+      'Cartinha + Flor': { count: 0, revenue: 0 },
+      'Cartinha + Flor + 2 Bis': { count: 0, revenue: 0 },
+      'Buquê Pequeno (10 Bis)': { count: 0, revenue: 0 },
+      'Buquê Médio (15 Bis)': { count: 0, revenue: 0 },
+      'Buquê Grande (20 Bis)': { count: 0, revenue: 0 },
     };
     
     // Look at all used codes to get historical product stats purchase

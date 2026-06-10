@@ -87,8 +87,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onStartSend, responsibles })
       a: 'Sim, totalmente! O seu código de acesso serve única e exclusivamente para liberar o formulário de envio. Assim que a mensagem é gravada no sistema, o código é consumido e marcado como "utilizado", sem que haja qualquer vínculo armazenado entre a carta criada e o código digitado. Ninguém (nem mesmo o administrador) conseguirá saber quem enviou!'
     },
     {
-      q: 'Como funciona a entrega das trufas e rosas?',
-      a: 'No dia do evento, a entrega será feita diretamente no pátio do colégio. Teremos dois cupidos encarregados de pegar as cartinhas, ler em voz alta o nome de quem recebeu, e a pessoa deverá ir até lá para retirar a sua trufa ou rosa!'
+      q: 'Como funciona a entrega dos Bis e flores?',
+      a: 'No dia do evento, a entrega será feita diretamente no pátio do colégio. Teremos dois cupidos encarregados de pegar as cartinhas, ler em voz alta o nome de quem recebeu, e a pessoa deverá ir até lá para retirar o seu Bis ou flor!'
     },
     {
       q: 'Posso enviar para professores ou funcionários?',
