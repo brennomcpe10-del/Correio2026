@@ -16,7 +16,7 @@ import {
   runTransaction, 
   writeBatch 
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from './firebase';
+import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { Responsible, ProductType, AccessCode, Letter, PRODUCTS } from '../types';
 
 // Base avatars (beautiful and romantic themed or neutral modern icons)
@@ -26,6 +26,65 @@ const MOCK_AVATARS = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150',
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150',
 ];
+
+let lettersCollectionToUse: string | null = null;
+let codesCollectionToUse: string | null = null;
+
+export async function getLettersCollection(): Promise<string> {
+  if (lettersCollectionToUse) {
+    return lettersCollectionToUse;
+  }
+  
+  const candidates = ['cartas_arraial', 'letters', 'messages'];
+  console.log("[Firebase Debug] Scanning collections for existing letters data:", candidates);
+  
+  for (const col of candidates) {
+    try {
+      const testSnap = await getDocs(collection(db, col));
+      console.log(`[Firebase Debug] Collection '${col}' has ${testSnap.size} documents.`);
+      if (testSnap.size > 0) {
+        console.log(`[Firebase Debug] Found ${testSnap.size} documents in collection '${col}'. Setting it as the active letters collection!`);
+        lettersCollectionToUse = col;
+        return col;
+      }
+    } catch (err: any) {
+      console.warn(`[Firebase Debug] Failed scanning collection '${col}':`, err.message || err);
+    }
+  }
+  
+  // Default fallback
+  lettersCollectionToUse = 'cartas_arraial';
+  console.log(`[Firebase Debug] No candidate collection had existing letters. Defaulting letters collection to '${lettersCollectionToUse}'.`);
+  return lettersCollectionToUse;
+}
+
+export async function getCodesCollection(): Promise<string> {
+  if (codesCollectionToUse) {
+    return codesCollectionToUse;
+  }
+  
+  const candidates = ['codigos_arraial', 'access_codes', 'codes', 'vendas'];
+  console.log("[Firebase Debug] Scanning collections for existing sales/codes data:", candidates);
+  
+  for (const col of candidates) {
+    try {
+      const testSnap = await getDocs(collection(db, col));
+      console.log(`[Firebase Debug] Collection '${col}' has ${testSnap.size} documents.`);
+      if (testSnap.size > 0) {
+        console.log(`[Firebase Debug] Found ${testSnap.size} documents in collection '${col}'. Setting it as the active codes collection!`);
+        codesCollectionToUse = col;
+        return col;
+      }
+    } catch (err: any) {
+      console.warn(`[Firebase Debug] Failed scanning collection '${col}':`, err.message || err);
+    }
+  }
+  
+  // Default fallback
+  codesCollectionToUse = 'codigos_arraial';
+  console.log(`[Firebase Debug] No candidate collection had existing codes. Defaulting codes collection to '${codesCollectionToUse}'.`);
+  return codesCollectionToUse;
+}
 
 // Seed initial data to Firestore if they are empty
 export async function initLocalStorage() {
@@ -60,8 +119,11 @@ export async function initLocalStorage() {
       await batch.commit();
     }
 
-    // 2. Bootstrapping Access Codes
-    const codesSnap = await getDocs(collection(db, 'codigos_arraial'));
+    const activeLettersCol = await getLettersCollection();
+    const activeCodesCol = await getCodesCollection();
+
+    // 2. Bootstrapping Access Codes (only if the detected active collection is empty)
+    const codesSnap = await getDocs(collection(db, activeCodesCol));
     if (codesSnap.empty) {
       const batch = writeBatch(db);
       const initialCodes: AccessCode[] = [
@@ -74,13 +136,13 @@ export async function initLocalStorage() {
         { code: 'CE-USED-8888', product: 'Cartinha', createdAt: new Date(Date.now() - 86400000).toISOString(), status: 'used' },
       ];
       initialCodes.forEach(code => {
-        batch.set(doc(db, 'codigos_arraial', code.code), code);
+        batch.set(doc(db, activeCodesCol, code.code), code);
       });
       await batch.commit();
     }
 
-    // 3. Bootstrapping Letters
-    const lettersSnap = await getDocs(collection(db, 'cartas_arraial'));
+    // 3. Bootstrapping Letters (only if the detected active collection is empty)
+    const lettersSnap = await getDocs(collection(db, activeLettersCol));
     if (lettersSnap.empty) {
       const batch = writeBatch(db);
       const initialLetters: Letter[] = [
@@ -123,7 +185,7 @@ export async function initLocalStorage() {
         }
       ];
       initialLetters.forEach(letter => {
-        batch.set(doc(db, 'cartas_arraial', letter.id), letter);
+        batch.set(doc(db, activeLettersCol, letter.id), letter);
       });
       await batch.commit();
     }
@@ -146,7 +208,10 @@ export async function initLocalStorage() {
 
 export async function forceRecreateEmptyCollections(): Promise<void> {
   try {
-    const codesSnap = await getDocs(collection(db, 'codigos_arraial'));
+    const activeCodesCol = await getCodesCollection();
+    const activeLettersCol = await getLettersCollection();
+    
+    const codesSnap = await getDocs(collection(db, activeCodesCol));
     if (codesSnap.empty) {
       // Create test access code CE-TESTE-2026
       const testCode: AccessCode = {
@@ -155,10 +220,10 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
         createdAt: new Date().toISOString(),
         status: 'active'
       };
-      await setDoc(doc(db, 'codigos_arraial', 'CE-TESTE-2026'), testCode);
+      await setDoc(doc(db, activeCodesCol, 'CE-TESTE-2026'), testCode);
 
-      // Create test letter to force creation of 'letters' collection
-      const lettersSnap = await getDocs(collection(db, 'cartas_arraial'));
+      // Create test letter to force creation of active letters collection
+      const lettersSnap = await getDocs(collection(db, activeLettersCol));
       if (lettersSnap.empty) {
         const testLetter: Letter = {
           id: 'let-test-2026',
@@ -172,7 +237,7 @@ export async function forceRecreateEmptyCollections(): Promise<void> {
           createdAt: new Date().toISOString(),
           status: 'pending'
         };
-        await setDoc(doc(db, 'cartas_arraial', 'let-test-2026'), testLetter);
+        await setDoc(doc(db, activeLettersCol, 'let-test-2026'), testLetter);
       }
     }
   } catch (error: any) {
@@ -229,12 +294,47 @@ export async function deleteResponsible(id: string): Promise<void> {
 
 // ACCESS CODES API
 export async function getAccessCodes(): Promise<AccessCode[]> {
-  try {
-    const snap = await getDocs(query(collection(db, 'codigos_arraial'), orderBy('createdAt', 'desc')));
-    return snap.docs.map(doc => doc.data() as AccessCode);
-  } catch (error: any) {
-    handleFirestoreError(error, OperationType.GET, 'codigos_arraial');
+  const candidates = ['codigos_arraial', 'access_codes', 'codes', 'vendas'];
+  const allCodesMap = new Map<string, AccessCode>();
+
+  for (const col of candidates) {
+    try {
+      console.log(`[Firebase Debug] Fetching codes from candidate collection: '${col}'...`);
+      const snap = await getDocs(collection(db, col));
+      console.log(`[Firebase Debug] Fetched ${snap.size} codes from candidates '${col}'.`);
+      
+      snap.docs.forEach(docSnap => {
+        const data = docSnap.data();
+        const codeKey = (data.code || docSnap.id).toUpperCase().trim();
+        
+        const mappedCode: AccessCode = {
+          code: data.code || docSnap.id,
+          product: data.product || 'Cartinha',
+          createdAt: data.createdAt || new Date().toISOString(),
+          status: data.status || 'used',
+          price: data.price !== undefined ? data.price : undefined,
+          truffleCount: data.truffleCount !== undefined ? data.truffleCount : (data.bisCount !== undefined ? data.bisCount : undefined)
+        };
+
+        if (!allCodesMap.has(codeKey)) {
+          allCodesMap.set(codeKey, mappedCode);
+        } else {
+          const existing = allCodesMap.get(codeKey)!;
+          if (mappedCode.status === 'used' && existing.status === 'active') {
+            allCodesMap.set(codeKey, mappedCode);
+          } else if (new Date(mappedCode.createdAt).getTime() > new Date(existing.createdAt).getTime()) {
+            allCodesMap.set(codeKey, mappedCode);
+          }
+        }
+      });
+    } catch (err: any) {
+      console.warn(`[Firebase Debug] Ignored scan warning on codes candidate '${col}':`, err.message || err);
+    }
   }
+
+  const codes = Array.from(allCodesMap.values());
+  codes.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return codes;
 }
 
 export async function generateCode(
@@ -243,6 +343,7 @@ export async function generateCode(
   truffleCount?: number
 ): Promise<string> {
   try {
+    const activeCol = await getCodesCollection();
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid confusing letters like O/I/0/1
     const genChunk = (len: number) => {
       let res = '';
@@ -268,69 +369,150 @@ export async function generateCode(
       newCode.truffleCount = truffleCount;
     }
     
-    await setDoc(doc(db, 'codigos_arraial', formattedCode), newCode);
+    await setDoc(doc(db, activeCol, formattedCode), newCode);
     return formattedCode;
   } catch (error: any) {
-    handleFirestoreError(error, OperationType.WRITE, 'codigos_arraial');
+    const activeCol = await getCodesCollection();
+    handleFirestoreError(error, OperationType.WRITE, activeCol);
   }
 }
 
 export async function validateCode(codeString: string): Promise<AccessCode | null> {
   try {
     const cleanCode = codeString.toUpperCase().trim();
-    const docRef = doc(db, 'codigos_arraial', cleanCode);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      const data = snap.data() as AccessCode;
-      if (data.status === 'active') {
-        return data;
+    const candidates = ['codigos_arraial', 'access_codes', 'codes', 'vendas'];
+    
+    for (const col of candidates) {
+      try {
+        const docRef = doc(db, col, cleanCode);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          const mappedCode: AccessCode = {
+            code: data.code || snap.id,
+            product: data.product || 'Cartinha',
+            createdAt: data.createdAt || new Date().toISOString(),
+            status: data.status || 'used',
+            price: data.price !== undefined ? data.price : undefined,
+            truffleCount: data.truffleCount !== undefined ? data.truffleCount : (data.bisCount !== undefined ? data.bisCount : undefined)
+          };
+          if (mappedCode.status === 'active') {
+            console.log(`[Firebase Debug] Code '${cleanCode}' successfully validated inside candidate collection '${col}'.`);
+            return mappedCode;
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[Firebase Debug] Validation scan ignored error on candidate '${col}':`, err.message || err);
       }
     }
     return null;
   } catch (error: any) {
-    handleFirestoreError(error, OperationType.GET, `codigos_arraial/${codeString}`);
+    const activeCol = await getCodesCollection();
+    handleFirestoreError(error, OperationType.GET, `${activeCol}/${codeString}`);
   }
 }
 
 // LETTERS API
-export async function getLetters(): Promise<Letter[]> {
-  try {
-    const snap = await getDocs(query(collection(db, 'cartas_arraial'), orderBy('recipient', 'asc')));
-    const allLetters = snap.docs.map(doc => doc.data() as Letter);
-    
-    // Apply "Visual Delay" security strategy
-    const pendingLetters = allLetters.filter(l => l.status === 'pending');
-    const totalPendingCount = pendingLetters.length;
-    
-    const nowMs = Date.now();
-    const ageThresholdMs = 20 * 60 * 1000; // 20 minutes in milliseconds
-    
-    return allLetters.filter(letter => {
-      // Completed/Archived letters are always visible
-      if (letter.status !== 'pending') {
-        return true;
-      }
-      
-      // If we have an accumulated pool of 4 or more pending letters, reveal them all immediately to the team 
-      if (totalPendingCount >= 4) {
-        return true;
-      }
-      
-      // Otherwise, only allow if the letter is more than 20 minutes old
-      if (!letter.createdAt) {
-        return false;
-      }
-      
-      const createdMs = Date.parse(letter.createdAt);
-      if (isNaN(createdMs)) {
-        return false;
-      }
-      
-      return (nowMs - createdMs) >= ageThresholdMs;
-    });
-  } catch (error: any) {
-    handleFirestoreError(error, OperationType.GET, 'cartas_arraial');
+export function determinePrice(product: string, truffleCount?: number, docPrice?: any): number {
+  if (docPrice !== undefined && docPrice !== null && !isNaN(Number(docPrice))) {
+    return Number(docPrice);
   }
+
+  const prod = String(product).trim();
+
+  // Exact matching from the user's list
+  if (prod === 'Cartinha') return 2;
+  if (prod === 'Cartinha + Trufa') return 3;
+  if (prod === 'Cartinha + Rosa') return 5;
+  if (prod === 'Cartinha + Trufa + Rosa') return 7;
+  
+  if (prod === 'Cartinha + Buquê de Trufas' || (prod.includes('Buquê') && prod.includes('trufa'))) {
+    if (truffleCount === 10 || docPrice === 20) return 20;
+    if (truffleCount === 15 || docPrice === 32) return 32;
+    return 12; // Buquê Pequeno (5 trufas)
+  }
+  
+  // also support literal old names directly if stored that way
+  if (prod.includes('Buquê Pequeno (5 trufas)') || prod.includes('Buquê Pequeno (5 Trufas)')) return 12;
+  if (prod.includes('Buquê Médio (10 trufas)') || prod.includes('Buquê Médio (10 Trufas)')) return 20;
+  if (prod.includes('Buquê Grande (15 trufas)') || prod.includes('Buquê Grande (15 Trufas)')) return 32;
+
+  if (prod === 'Cartinha + 1 Bis') return 3;
+  if (prod === 'Cartinha + Flor') return 5;
+  if (prod === 'Cartinha + Flor + 2 Bis') return 7;
+  if (prod === 'Buquê Pequeno (10 Bis)') return 12;
+  if (prod === 'Buquê Médio (15 Bis)') return 17;
+  if (prod === 'Buquê Grande (20 Bis)') return 22;
+
+  // Fallback nos PRODUCTS atuais
+  const foundInProducts = PRODUCTS.find(p => p.type === prod);
+  if (foundInProducts) {
+    return foundInProducts.price;
+  }
+
+  return 2; // Default
+}
+
+export async function getLetters(): Promise<Letter[]> {
+  const candidates = ['cartas_arraial', 'letters', 'messages'];
+  const allLettersMap = new Map<string, Letter>();
+
+  console.log(`[Firebase Debug - getLetters] INITIATING FETCH from letters candidates:`, candidates);
+
+  for (const col of candidates) {
+    try {
+      const snap = await getDocs(collection(db, col));
+      console.log(`[Firebase Debug - getLetters] Candidate '${col}' returned ${snap.size} documents.`);
+      
+      snap.docs.forEach((docSnap, idx) => {
+        const data = docSnap.data();
+        const truffleCountVal = data.truffleCount !== undefined ? data.truffleCount : (data.bisCount !== undefined ? data.bisCount : undefined);
+        const resolvedPrice = determinePrice(data.product || 'Cartinha', truffleCountVal, data.price);
+
+        const mappedLetter: Letter = {
+          id: docSnap.id,
+          codeUsed: data.codeUsed || data.code || '',
+          recipient: data.recipient || data.recipientName || data.destinatario || 'Sem destinatário',
+          recipientClass: data.recipientClass || data.turma || 'Sem turma',
+          message: data.message || data.mensagem || data.conteudo || '',
+          signature: data.signature || data.assinatura || 'Anônimo',
+          writingType: data.writingType || 'printed',
+          isAnonymous: data.isAnonymous !== undefined ? data.isAnonymous : true,
+          product: data.product || 'Cartinha',
+          createdAt: data.createdAt || new Date().toISOString(),
+          status: data.status || 'pending',
+          readAloud: data.readAloud || false,
+          ejaSpecification: data.ejaSpecification || '',
+          employeeRole: data.employeeRole || '',
+          price: resolvedPrice,
+          truffleCount: truffleCountVal,
+          itemDescription: data.itemDescription || data.productDescription || data.produto || data.item || undefined
+        };
+
+        if (!allLettersMap.has(mappedLetter.id)) {
+          allLettersMap.set(mappedLetter.id, mappedLetter);
+        } else {
+          const existing = allLettersMap.get(mappedLetter.id)!;
+          if (mappedLetter.status === 'completed' && existing.status === 'pending') {
+            allLettersMap.set(mappedLetter.id, mappedLetter);
+          } else if (new Date(mappedLetter.createdAt).getTime() > new Date(existing.createdAt).getTime()) {
+            allLettersMap.set(mappedLetter.id, mappedLetter);
+          }
+        }
+      });
+    } catch (err: any) {
+      console.warn(`[Firebase Debug] Ignored scan warning on letters candidate '${col}':`, err.message || err);
+    }
+  }
+
+  const allLetters = Array.from(allLettersMap.values());
+  allLetters.sort((a, b) => {
+    const recA = (a.recipient || '').toLowerCase().trim();
+    const recB = (b.recipient || '').toLowerCase().trim();
+    return recA.localeCompare(recB);
+  });
+
+  return allLetters;
 }
 
 // Submit a letter - guarantees anonymity by completely decoupling code consume from insert!
@@ -349,9 +531,27 @@ export async function submitLetter(
   employeeRole?: string
 ): Promise<boolean> {
   const cleanCode = codeString.toUpperCase().trim();
-  const codeRef = doc(db, 'codigos_arraial', cleanCode);
+  const activeLettersCol = await getLettersCollection();
+  
+  // Find which candidate collection contains this active code
+  const codeCandidates = ['codigos_arraial', 'access_codes', 'codes', 'vendas'];
+  let detectedCodeCol = 'codigos_arraial';
+  
+  for (const col of codeCandidates) {
+    try {
+      const snap = await getDoc(doc(db, col, cleanCode));
+      if (snap.exists() && snap.data()?.status === 'active') {
+        detectedCodeCol = col;
+        break;
+      }
+    } catch {
+      // ignore, seek next
+    }
+  }
+
+  const codeRef = doc(db, detectedCodeCol, cleanCode);
   const letterId = `let-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  const letterRef = doc(db, 'cartas_arraial', letterId);
+  const letterRef = doc(db, activeLettersCol, letterId);
 
   try {
     const success = await runTransaction(db, async (transaction) => {
@@ -387,6 +587,8 @@ export async function submitLetter(
       }
       if (codeData.truffleCount !== undefined) {
         newLetter.truffleCount = codeData.truffleCount;
+      } else if (codeData.bisCount !== undefined) {
+        newLetter.truffleCount = codeData.bisCount;
       }
       
       transaction.set(letterRef, newLetter);
@@ -401,15 +603,42 @@ export async function submitLetter(
 
 export async function updateLetterStatus(id: string, status: 'pending' | 'completed'): Promise<boolean> {
   try {
-    const docRef = doc(db, 'cartas_arraial', id);
+    const activeLettersCol = await getLettersCollection();
+    const candidates = ['cartas_arraial', 'letters', 'messages'];
+    let detectedLettersCol = activeLettersCol;
+    
+    for (const col of candidates) {
+      try {
+        const snap = await getDoc(doc(db, col, id));
+        if (snap.exists()) {
+          detectedLettersCol = col;
+          break;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    
+    const docRef = doc(db, detectedLettersCol, id);
     await updateDoc(docRef, { status });
     return true;
   } catch (error: any) {
-    handleFirestoreError(error, OperationType.UPDATE, `cartas_arraial/${id}`);
+    const activeLettersCol = await getLettersCollection();
+    handleFirestoreError(error, OperationType.UPDATE, `${activeLettersCol}/${id}`);
   }
 }
 
 // STATS API
+export function getLetterPrice(letter: Letter): number {
+  if (!letter) return 0;
+  return determinePrice(letter.product, letter.truffleCount, letter.price);
+}
+
+export function calculateTotal(letters: Letter[]): number {
+  if (!letters) return 0;
+  return letters.reduce((sum, letter) => sum + (Number(letter.price) || 0), 0);
+}
+
 export async function getStats(): Promise<{
   total: number;
   pending: number;
@@ -417,71 +646,73 @@ export async function getStats(): Promise<{
   productSummary: { product: ProductType; count: number; revenue: number }[];
 }> {
   try {
-    const [lettersSnap, codesSnap] = await Promise.all([
-      getDocs(collection(db, 'cartas_arraial')),
-      getDocs(collection(db, 'codigos_arraial'))
+    console.log(`[Firebase Debug] getStats: Aggregating stats from ALL loaded candidates...`);
+    
+    const [letters, codes] = await Promise.all([
+      getLetters(),
+      getAccessCodes()
     ]);
-
-    const letters = lettersSnap.docs.map(doc => doc.data() as Letter);
-    const codes = codesSnap.docs.map(doc => doc.data() as AccessCode);
     
     const total = letters.length;
     const pending = letters.filter(l => l.status === 'pending').length;
     const completed = letters.filter(l => l.status === 'completed').length;
     
-    // Pre-initialize counting for stats
-    const productSummary: Record<ProductType, { count: number; revenue: number }> = {
-      'Cartinha': { count: 0, revenue: 0 },
-      'Cartinha + Trufa': { count: 0, revenue: 0 },
-      'Cartinha + Rosa': { count: 0, revenue: 0 },
-      'Cartinha + Trufa + Rosa': { count: 0, revenue: 0 },
-      'Cartinha + Buquê de Trufas': { count: 0, revenue: 0 },
-      'Cartinha + 1 Bis': { count: 0, revenue: 0 },
-      'Cartinha + Flor': { count: 0, revenue: 0 },
-      'Cartinha + Flor + 2 Bis': { count: 0, revenue: 0 },
-      'Buquê Pequeno (10 Bis)': { count: 0, revenue: 0 },
-      'Buquê Médio (15 Bis)': { count: 0, revenue: 0 },
-      'Buquê Grande (20 Bis)': { count: 0, revenue: 0 },
-    };
+    // We want to count actual purchases from letters/codes to populate productSummary.
+    const productSummary: Record<string, { count: number; revenue: number }> = {};
     
-    // Look at all used codes to get historical product stats purchase
-    codes.forEach(c => {
-      // Check price
-      const prodConfig = PRODUCTS.find(p => p.type === c.product);
-      if (prodConfig && c.status === 'used') {
-        productSummary[c.product].count += 1;
-        const actualPrice = (c.price !== undefined && c.price !== null) ? c.price : prodConfig.price;
-        productSummary[c.product].revenue += actualPrice;
-      }
+    // Initialise all productTypes (including current PRODUCTS and old ones)
+    const allProdTypes: string[] = [
+      'Cartinha', 
+      'Cartinha + Trufa', 
+      'Cartinha + Rosa', 
+      'Cartinha + Trufa + Rosa', 
+      'Cartinha + Buquê de Trufas', 
+      'Cartinha + 1 Bis', 
+      'Cartinha + Flor', 
+      'Cartinha + Flor + 2 Bis', 
+      'Buquê Pequeno (10 Bis)', 
+      'Buquê Médio (15 Bis)', 
+      'Buquê Grande (20 Bis)'
+    ];
+
+    allProdTypes.forEach(p => {
+      productSummary[p] = { count: 0, revenue: 0 };
     });
 
-    // Just to show elegant records in dashboard, if letters already sent do not match the codes table used,
-    // we calibrate to offer maximum visual completeness:
     letters.forEach(letter => {
-      // If the letters sent doesn't outnumber the calculated codes, we still count it or fallback:
-      const prodConfig = PRODUCTS.find(p => p.type === letter.product);
-      if (prodConfig) {
-        // Ensure we register at least letters presence in analytics:
-        const calculatedCount = codes.filter(c => c.product === letter.product && c.status === 'used').length;
-        if (calculatedCount < 1) {
-          productSummary[letter.product].count += 1;
-          productSummary[letter.product].revenue += prodConfig.price;
-        }
+      const prod = letter.product || 'Cartinha';
+      if (!productSummary[prod]) {
+        productSummary[prod] = { count: 0, revenue: 0 };
       }
+      productSummary[prod].count += 1;
+      productSummary[prod].revenue += getLetterPrice(letter);
     });
+    
+    // Convert to target signature format
+    const formattedSummary = Object.entries(productSummary)
+      .filter(([_, val]) => val.count > 0) // filter empty products to keep display compact
+      .map(([product, value]) => ({
+        product: product as ProductType,
+        count: value.count,
+        revenue: value.revenue,
+      }));
     
     return {
       total,
       pending,
       completed,
-      productSummary: Object.entries(productSummary).map(([product, value]) => ({
-        product: product as ProductType,
-        count: value.count,
-        revenue: value.revenue,
-      }))
+      productSummary: formattedSummary
     };
   } catch (error: any) {
-    handleFirestoreError(error, OperationType.GET, 'stats');
+    const activeLettersCol = await getLettersCollection();
+    handleFirestoreError(error, OperationType.GET, activeLettersCol);
+    // fallback empty state
+    return {
+      total: 0,
+      pending: 0,
+      completed: 0,
+      productSummary: []
+    };
   }
 }
 

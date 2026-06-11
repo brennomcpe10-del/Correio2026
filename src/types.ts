@@ -60,6 +60,7 @@ export interface Letter {
   employeeRole?: string; // Cargo/função do funcionário (se aplicável)
   price?: number; // Preço do buquê (ex: 12, 20, 32) se aplicável
   truffleCount?: number; // Quantidade de trufas (ex: 5, 10, 15) se aplicável
+  itemDescription?: string; // Descrição ou nome do item (trufa, bis, etc)
 }
 
 export interface SalesStat {

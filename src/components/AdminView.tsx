@@ -13,7 +13,8 @@ import {
 import { 
   getStats, getAccessCodes, generateCode, getLetters, updateLetterStatus, 
   getResponsibles, addResponsible, deleteResponsible,
-  getAllowedAdmins, addAllowedAdmin, removeAllowedAdmin, checkIsAllowedAdmin
+  getAllowedAdmins, addAllowedAdmin, removeAllowedAdmin, checkIsAllowedAdmin,
+  getLetterPrice, calculateTotal
 } from '../lib/storage';
 import { ProductType, PRODUCTS, AccessCode, Letter, Responsible } from '../types';
 
@@ -198,7 +199,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   // Fetch initial data
   useEffect(() => {
     refreshAllData();
-  }, [responsiblesList]);
+  }, []);
 
   const refreshAllData = async () => {
     try {
@@ -241,11 +242,30 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
       return;
     }
 
-    // 4. Find new arrivals that are not released and not buffered
-    const newArrivals = letters.filter(letter => 
-      !currentReleased!.includes(letter.id) && 
-      !currentBuffered.some(b => b.letter.id === letter.id)
-    );
+    // Automatically release any letter that is completed OR physically older than 20 minutes (1200000ms)
+    const autoReleasedIds: string[] = [];
+    letters.forEach(letter => {
+      if (!currentReleased!.includes(letter.id)) {
+        const isCompleted = letter.status === 'completed';
+        const isOld = letter.createdAt ? (Date.now() - Date.parse(letter.createdAt) >= 20 * 60 * 1000) : true;
+        if (isCompleted || isOld) {
+          autoReleasedIds.push(letter.id);
+        }
+      }
+    });
+
+    let finalReleased = [...currentReleased!];
+    if (autoReleasedIds.length > 0) {
+      finalReleased = [...finalReleased, ...autoReleasedIds];
+      localStorage.setItem('correio_released_ids', JSON.stringify(finalReleased));
+    }
+
+    // 4. Find new arrivals that are not released, not buffered, and are not physically old/completed
+    const newArrivals = letters.filter(letter => {
+      if (finalReleased.includes(letter.id)) return false;
+      if (currentBuffered.some(b => b.letter.id === letter.id)) return false;
+      return true; // Only buffer pending, young letters
+    });
 
     let updatedBuffered = [...currentBuffered];
     if (newArrivals.length > 0) {
@@ -258,8 +278,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
       localStorage.setItem('correio_buffered_letters', JSON.stringify(updatedBuffered));
     }
 
+    // Remove any letters from updatedBuffered that might have been auto-released (just a safety precaution)
+    updatedBuffered = updatedBuffered.filter(b => !finalReleased.includes(b.letter.id));
+
     // 5. Evaluate Release Conditions
-    let finalReleased = [...currentReleased!];
     let finalBuffered = [...updatedBuffered];
 
     const oldestAddedAt = finalBuffered.length > 0 ? finalBuffered[0].addedAt : null;
@@ -469,12 +491,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
     }
   };
 
-  // Filter letters dynamically
+  // Filter letters dynamically (unfiltered by release block for Admin unified database control)
   const filteredLetters = letters.filter(letter => {
-    // Only display letters that have been released in the current system context
-    const isReleased = releasedLetterIds.includes(letter.id);
-    if (!isReleased) return false;
-
     const matchesSearch = letter.recipient.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           letter.message.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesClass = classFilter ? letter.recipientClass.toLowerCase().includes(classFilter.toLowerCase()) : true;
@@ -549,7 +567,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
   }
 
   // Calculate stats values
-  const totalRevenue = stats.productSummary.reduce((acc, curr) => acc + curr.revenue, 0);
+  console.log('[AdminView Debug] Letters loaded from database:', letters);
+  const totalRevenue = calculateTotal(letters);
 
   const getGeneratorOptionLabel = (option: string) => {
     switch (option) {
@@ -803,6 +822,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                                 : '💐 Buquê Pequeno (5 trufas) - R$ 12,00'
                               : PRODUCTS.find(p => p.type === c.product)
                               ? `${PRODUCTS.find(p => p.type === c.product)?.icon} ${c.product} - R$ ${PRODUCTS.find(p => p.type === c.product)?.price.toFixed(2).replace('.', ',')}`
+                              : c.price !== undefined
+                              ? `${c.product} - R$ ${Number(c.price).toFixed(2).replace('.', ',')}`
                               : c.product}
                           </span>
                         </div>
@@ -852,14 +873,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                 onClick={() => setLetterStatusTab('pending')}
                 className={`px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${letterStatusTab === 'pending' ? 'bg-[#E53E3E] text-white shadow-xs' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
               >
-                📥 Pendentes ({letters.filter(l => l.status === 'pending' && releasedLetterIds.includes(l.id)).length})
+                📥 Pendentes ({letters.filter(l => l.status === 'pending').length})
               </button>
               
               <button
                 onClick={() => setLetterStatusTab('completed')}
                 className={`px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${letterStatusTab === 'completed' ? 'bg-[#E53E3E] text-white shadow-xs' : 'text-[#FDF2F2]/70 hover:bg-[#2d040a]/60 hover:text-white'}`}
               >
-                📦 Concluídas ({letters.filter(l => l.status === 'completed' && releasedLetterIds.includes(l.id)).length})
+                📦 Concluídas ({letters.filter(l => l.status === 'completed').length})
               </button>
             </div>
           </div>
@@ -977,15 +998,20 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                                 : letter.recipientClass}
                             </span>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right flex flex-col items-end gap-1">
                             <span className="inline-block text-[10px] uppercase tracking-wider font-bold font-mono bg-[#E53E3E]/15 text-[#E53E3E] px-2 py-1 rounded-lg border border-[#E53E3E]/30 shadow-3xs">
-                              {icon} {letter.product === 'Cartinha + Buquê de Trufas'
+                              {icon} {letter.itemDescription ? letter.itemDescription : (letter.product === 'Cartinha + Buquê de Trufas'
                                 ? letter.price === 20 || letter.truffleCount === 10
                                   ? 'Buquê Médio (10 trufas)'
                                   : letter.price === 32 || letter.truffleCount === 15
                                   ? 'Buquê Grande (15 trufas)'
                                   : 'Buquê Pequeno (5 trufas)'
-                                : letter.product}
+                                : letter.product)}
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-amber-500 whitespace-nowrap">
+                              {(letter.price !== undefined && letter.price !== null) 
+                                ? Number(letter.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                                : getLetterPrice(letter).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </span>
                           </div>
                         </div>

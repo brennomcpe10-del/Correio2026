@@ -65,9 +65,72 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    match /vendas/{codeId} {
+      allow read: if true;
+      allow create: if isValidAccessCode(request.resource.data);
+      allow update: if isValidAccessCode(request.resource.data) 
+        && (
+          true 
+          || (
+            resource.data.status == 'active' 
+            && request.resource.data.status == 'used'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          )
+        );
+      allow delete: if true;
+    }
+
+    match /access_codes/{codeId} {
+      allow read: if true;
+      allow create: if isValidAccessCode(request.resource.data);
+      allow update: if isValidAccessCode(request.resource.data) 
+        && (
+          true 
+          || (
+            resource.data.status == 'active' 
+            && request.resource.data.status == 'used'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          )
+        );
+      allow delete: if true;
+    }
+
+    match /codes/{codeId} {
+      allow read: if true;
+      allow create: if isValidAccessCode(request.resource.data);
+      allow update: if isValidAccessCode(request.resource.data) 
+        && (
+          true 
+          || (
+            resource.data.status == 'active' 
+            && request.resource.data.status == 'used'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          )
+        );
+      allow delete: if true;
+    }
+
     // 3. Letters rules
     match /cartas_arraial/{letterId} {
       allow read: if true; // Admin and client flows read data
+      allow create: if isValidLetter(request.resource.data) && request.resource.data.status == 'pending';
+      allow update: if isValidLetter(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['pending', 'completed'];
+      allow delete: if true;
+    }
+
+    match /letters/{letterId} {
+      allow read: if true;
+      allow create: if isValidLetter(request.resource.data) && request.resource.data.status == 'pending';
+      allow update: if isValidLetter(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['pending', 'completed'];
+      allow delete: if true;
+    }
+
+    match /messages/{letterId} {
+      allow read: if true;
       allow create: if isValidLetter(request.resource.data) && request.resource.data.status == 'pending';
       allow update: if isValidLetter(request.resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
