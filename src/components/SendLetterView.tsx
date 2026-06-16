@@ -33,7 +33,7 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
   const [sigPreset, setSigPreset] = useState<'Anônimo' | 'Seu admirador secreto' | '❤️' | 'Apenas iniciais' | 'Nome completo' | 'Personalizado'>('Anônimo');
   const [sigText, setSigText] = useState('');
   
-  const [writingType, setWritingType] = useState<'handwritten' | 'printed'>('handwritten');
+  const [writingType, setWritingType] = useState<'handwritten' | 'printed'>('printed');
   const [isAnonymous, setIsAnonymous] = useState<boolean>(true);
   const [senderName, setSenderName] = useState('');
   
@@ -456,30 +456,19 @@ export const SendLetterView: React.FC<SendLetterViewProps> = ({ onSuccessReturn 
                   <span className="text-sm font-bold text-[#E53E3E]">02.</span>
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#FDF2F2]">Como deseja sua mensagem no papel?</h3>
                 </div>
-                <p className="text-xs text-[#FDF2F2]/50">
-                  Os nossos cupidos vão preparar o papel físico baseado na sua preferência de escrita.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 pt-1">
-                  <label className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 hover:bg-[#2d040a]/40 transition-all cursor-pointer text-xs font-bold text-[#FDF2F2]/90 flex-1">
-                    <input
-                      type="radio"
-                      name="writingType"
-                      checked={writingType === 'handwritten'}
-                      onChange={() => setWritingType('handwritten')}
-                      className="accent-[#E53E3E] h-4 w-4 shrink-0"
-                    />
-                    <span>✍️ Escrita à Mão (Cursive Tradicional)</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 hover:bg-[#2d040a]/40 transition-all cursor-pointer text-xs font-bold text-[#FDF2F2]/90 flex-1">
-                    <input
-                      type="radio"
-                      name="writingType"
-                      checked={writingType === 'printed'}
-                      onChange={() => setWritingType('printed')}
-                      className="accent-[#E53E3E] h-4 w-4 shrink-0"
-                    />
-                    <span>🖨️ Impressa (Tipografia Clássica)</span>
-                  </label>
+                <div className="bg-[#E53E3E]/10 border border-[#E53E3E]/30 p-3.5 rounded-xl space-y-2">
+                  <p className="text-xs text-yellow-500 font-bold flex items-center gap-1.5">
+                    <span>⚠️</span> Apenas Formato Impresso Disponível
+                  </p>
+                  <p className="text-[11px] text-[#FDF2F2]/80 leading-relaxed font-medium">
+                    Devido ao encerramento dos trabalhos de caligrafia manual dos nossos cupidos, todas as mensagens agora serão enviadas exclusivamente no formato <strong>Impresso (com tipografia clássica)</strong>. A opção escrita à mão não está mais disponível.
+                  </p>
+                </div>
+                <div className="flex pt-1">
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl border border-[#FDF2F2]/10 bg-[#2d040a]/40 text-xs font-bold text-[#FDF2F2]/90 flex-1">
+                    <span className="text-[#E53E3E]">🖨️</span>
+                    <span>Impressa (Tipografia Clássica de Cupido)</span>
+                  </div>
                 </div>
               </div>
 

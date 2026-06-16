@@ -111,10 +111,10 @@ export default function App() {
             <span className="text-xl sm:text-2xl pt-0.5 shrink-0 animate-pulse">⚠️</span>
             <div className="flex-grow pr-6">
               <h4 className="font-serif font-bold text-xs sm:text-sm text-yellow-400 mb-1 tracking-wide uppercase">
-                AVISO: Preços Repaginados!
+                ⚠️ AVISO IMPORTANTE: Novas Regras!
               </h4>
               <p className="text-xs text-[#FDF2F2]/90 leading-relaxed font-sans font-medium">
-                Informamos que todos os pedidos de trufas feitos até o dia 10 de junho serão entregues normalmente. A partir desta data, 10 de junho, todos os mimos serão substituídos por deliciosos Bis.
+                A venda de <strong>buquês foi encerrada</strong>. Agora, estão disponíveis apenas a <strong>Cartinha Simples (R$ 2,00)</strong> e a <strong>Cartinha + Bis (R$ 3,00)</strong>. Além disso, <strong>não há mais a opção de escolher a cartinha escrita à mão</strong> — todas as cartinhas serão enviadas exclusivamente no formato <strong>impresso</strong>.
               </p>
             </div>
 

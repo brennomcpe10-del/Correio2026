@@ -753,11 +753,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onRefreshData, responsible
                   >
                     <option value="Cartinha" className="text-white bg-[#1f0306]">❤️ Cartinha - R$ 2,00</option>
                     <option value="Cartinha + 1 Bis" className="text-white bg-[#1f0306]">🍫 Cartinha + 1 Bis - R$ 3,00</option>
-                    <option value="Cartinha + Flor" className="text-white bg-[#1f0306]">🌹 Cartinha + Flor - R$ 5,00</option>
-                    <option value="Cartinha + Flor + 2 Bis" className="text-white bg-[#1f0306]">🌹🍫 Cartinha + Flor + 2 Bis - R$ 7,00</option>
-                    <option value="Buquê Pequeno (10 Bis)" className="text-white bg-[#1f0306]">💐 Buquê Pequeno (10 Bis) - R$ 12,00</option>
-                    <option value="Buquê Médio (15 Bis)" className="text-white bg-[#1f0306]">💐 Buquê Médio (15 Bis) - R$ 17,00</option>
-                    <option value="Buquê Grande (20 Bis)" className="text-white bg-[#1f0306]">💐 Buquê Grande (20 Bis) - R$ 22,00</option>
                   </select>
                 </div>
 
